@@ -1,4 +1,4 @@
-import { useSelector } from 'react-redux';
+// import { useSelector } from 'react-redux';
 import ProductCard from './ProductCard';
 
 const ProductList = () => {

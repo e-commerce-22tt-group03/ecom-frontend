@@ -1,7 +1,7 @@
 // import { Link, NavLink } from 'react-router-dom';
 // import { ShoppingCart, Search, User } from 'lucide-react';
 
-import { version } from "react"
+// import { version } from "react"
 
 // const Header = () => {
 //     // This will later be replaced with data from redux

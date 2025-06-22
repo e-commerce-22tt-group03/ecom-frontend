@@ -10,6 +10,9 @@ export const fetchProducts = createAsyncThunk(
             // return response.data;
             
             // Mock data for now
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+            // Not sure what the line of code above for, will examine later.
+
             return [
                 {
                     id: 1,
