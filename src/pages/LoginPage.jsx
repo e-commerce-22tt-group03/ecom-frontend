@@ -1,16 +1,41 @@
-import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { loginUser } from '../features/auth/authSlice';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    
     const dispatch = useDispatch();
+    const { user, isLoading, error } = useSelector((state) => state.auth);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (user) {
+            navigate('/');
+        }
+    }, [user, error, navigate]);
 
     const handleLogin = (e) => {
         e.preventDefault();
-        dispatch(loginUser({ email, password }));
+        
+        // Client-side validation
+        if (!email.trim()) {
+            alert("Email is required!");
+            return;
+        }
+        
+        if (!password) {
+            alert("Password is required!");
+            return;
+        }
+        
+        dispatch(loginUser({ 
+            email: email.trim(), 
+            password: password 
+        }));
     };
 
     return (
@@ -23,6 +48,14 @@ const LoginPage = () => {
                             <span href="/" className="text-3xl font-bold text-primary mb-[100px]">🌸 LazaHoa</span>
                             <h2 className="text-lg font-semibold text-base-content">Login</h2>
                         </div>
+                        
+                        {/* Error Display */}
+                        {error && (
+                            <div className="alert alert-error mb-4">
+                                <span>{error}</span>
+                            </div>
+                        )}
+                        
                         <form onSubmit={handleLogin} className="space-y-5">
                             <div className="form-control">
                                 <label htmlFor="email" className="label">
@@ -36,6 +69,7 @@ const LoginPage = () => {
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="input input-bordered w-full"
                                     autoComplete="username"
+                                    required
                                 />
                             </div>
                             <div className="form-control">
@@ -51,6 +85,7 @@ const LoginPage = () => {
                                         onChange={(e) => setPassword(e.target.value)}
                                         className="input input-bordered w-full pr-10"
                                         autoComplete="current-password"
+                                        required
                                     />
                                     <button
                                         type="button"
@@ -74,7 +109,13 @@ const LoginPage = () => {
                             </div>
                             <div className="flex justify-between items-center text-sm mt-2">
                                 <a className="link link-hover text-primary" href="/register">Create an account</a>
-                                <button type="submit" className="btn btn-primary px-8">LOGIN</button>
+                                <button 
+                                    type="submit" 
+                                    className={`btn btn-primary px-8 ${isLoading ? 'loading' : ''}`}
+                                    disabled={isLoading}
+                                >
+                                    {isLoading ? 'Logging in...' : 'LOGIN'}
+                                </button>
                             </div>
                         </form>
                         <div className="flex justify-between mt-10 text-xs text-base-content/60">
