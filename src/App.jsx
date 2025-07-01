@@ -8,7 +8,7 @@ function App(){
   return (
     <div data-theme="bumblebee" className="min-h-screen flex flex-col bg-base-200">
       <Header />
-      <main className="flex-grow container mx-auto px-4 py-8">
+      <main className="flex-grow">
         <AppRoutes />
       </main>
       <Footer />
