@@ -1,4 +1,5 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { addProduct as addProductApi } from '../../api/productApi';
 
 // Async thunk for fetching products (placeholder for future API integration)
 export const fetchProducts = createAsyncThunk(
@@ -8,7 +9,7 @@ export const fetchProducts = createAsyncThunk(
             // TODO: Replace with actual API call
             // const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/products`);
             // return response.data;
-            
+
             // Mock data for now
             await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
             // Not sure what the line of code above for, will examine later.
@@ -35,6 +36,20 @@ export const fetchProducts = createAsyncThunk(
             ];
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch products');
+        }
+    }
+);
+
+// Async thunk for adding a new product
+export const addProduct = createAsyncThunk(
+    'products/addProduct',
+    async (productData, { rejectWithValue }) => {
+        try {
+            // The API spec says it returns an object with the added product
+            const data = await addProductApi(productData);
+            return data.product; // Return the newly created product
+        } catch (error) {
+            return rejectWithValue(error);
         }
     }
 );
@@ -82,7 +97,21 @@ const productsSlice = createSlice({
             .addCase(fetchProducts.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
+            })
+            .addCase(addProduct.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(addProduct.fulfilled, (state, action) => {
+                state.loading = false;
+                // Add the new product to the list in the state
+                state.items.push(action.payload);
+            })
+            .addCase(addProduct.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload; // The error message from rejectWithValue
             });
+
     }
 });
 
