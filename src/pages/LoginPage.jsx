@@ -9,14 +9,14 @@ const LoginPage = () => {
     const [showPassword, setShowPassword] = useState(false);
     
     const dispatch = useDispatch();
-    const { user, isLoading, error } = useSelector((state) => state.auth);
+    const { user, isLoading, error, isAuthenticated } = useSelector((state) => state.auth);
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (user) {
+        if (isAuthenticated && user) {
             navigate('/');
         }
-    }, [user, error, navigate]);
+    }, [isAuthenticated, user, navigate]);
 
     const handleLogin = (e) => {
         e.preventDefault();

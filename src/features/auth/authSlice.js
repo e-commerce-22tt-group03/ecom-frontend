@@ -45,9 +45,13 @@ export const loginUser = createAsyncThunk(
       const response = await api.post('/auth/login', userData);
       
       // Store token in localStorage for persistence
-      if (response.data.data?.token?.token) {
-        localStorage.setItem('authToken', response.data.data.token.token);
-        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      // Handle different possible response structures
+      const token = response.data.token || response.data.data?.token || response.data.access_token;
+      const user = response.data.user || response.data.data?.user;
+      
+      if (token) {
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('user', JSON.stringify(user));
       }
       
       return response.data;
@@ -193,8 +197,12 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload.data.user;
-        state.token = action.payload.data.token.token;
+        // Handle different possible response structures
+        const user = action.payload.user || action.payload.data?.user;
+        const token = action.payload.token || action.payload.data?.token || action.payload.access_token;
+        
+        state.user = user;
+        state.token = token;
         state.isAuthenticated = true;
         state.error = null;
       })

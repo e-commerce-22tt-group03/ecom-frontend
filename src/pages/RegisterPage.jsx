@@ -10,22 +10,10 @@ const RegisterPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [registrationSuccess, setRegistrationSuccess] = useState(false);
   
   const dispatch = useDispatch();
   const { user, isLoading, error } = useSelector((state) => state.auth);
   const navigate = useNavigate();
-
-  // Handle successful registration
-  useEffect(() => {
-    if (registrationSuccess && !isLoading && !error) {
-      const timer = setTimeout(() => {
-        navigate('/login');
-      }, 2000); // Navigate to login after 2 seconds
-
-      return () => clearTimeout(timer);
-    }
-  }, [registrationSuccess, isLoading, error, navigate]);
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -64,9 +52,12 @@ const RegisterPage = () => {
       confirm_password: confirmPassword
     }));
 
-    // Check if registration was successful
+    // Check if registration was successful and navigate immediately
     if (registerUser.fulfilled.match(resultAction)) {
-      setRegistrationSuccess(true);
+      // Show success message briefly then navigate
+      setTimeout(() => {
+        navigate('/login');
+      }, 1500); // 1.5 seconds delay to show success message
     }
   };
 
@@ -80,13 +71,6 @@ const RegisterPage = () => {
               <span href="/" className="text-3xl font-bold text-primary mb-[100px]">🌸 LazaHoa</span>
               <h2 className="text-lg font-semibold text-base-content">Sign Up</h2>
             </div>
-            
-            {/* Success Message */}
-            {registrationSuccess && !error && (
-              <div className="alert alert-success mb-4">
-                <span>Registration successful! Redirecting to login...</span>
-              </div>
-            )}
             
             {/* Error Display */}
             {error && (
@@ -109,7 +93,6 @@ const RegisterPage = () => {
                   className="input input-bordered w-full"
                   autoComplete="name"
                   required
-                  disabled={registrationSuccess}
                 />
               </div>
               
@@ -126,7 +109,6 @@ const RegisterPage = () => {
                   className="input input-bordered w-full"
                   autoComplete="username"
                   required
-                  disabled={registrationSuccess}
                 />
               </div>
               
@@ -145,7 +127,6 @@ const RegisterPage = () => {
                     autoComplete="new-password"
                     required
                     minLength="6"
-                    disabled={registrationSuccess}
                   />
                   <button
                     type="button"
@@ -153,7 +134,6 @@ const RegisterPage = () => {
                     tabIndex={-1}
                     onClick={() => setShowPassword((v) => !v)}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    disabled={registrationSuccess}
                   >
                     {showPassword ? (
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -183,7 +163,6 @@ const RegisterPage = () => {
                     className="input input-bordered w-full pr-10"
                     autoComplete="new-password"
                     required
-                    disabled={registrationSuccess}
                   />
                   <button
                     type="button"
@@ -191,7 +170,6 @@ const RegisterPage = () => {
                     tabIndex={-1}
                     onClick={() => setShowConfirmPassword((v) => !v)}
                     aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                    disabled={registrationSuccess}
                   >
                     {showConfirmPassword ? (
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -210,9 +188,9 @@ const RegisterPage = () => {
               <button 
                 type="submit" 
                 className={`btn btn-primary w-full ${isLoading ? 'loading' : ''}`}
-                disabled={isLoading || registrationSuccess}
+                disabled={isLoading}
               >
-                {registrationSuccess ? 'Registration Successful!' : isLoading ? 'Signing Up...' : 'Sign Up'}
+                {isLoading ? 'Signing Up...' : 'Sign Up'}
               </button>
               
               <div className="text-center text-sm">
