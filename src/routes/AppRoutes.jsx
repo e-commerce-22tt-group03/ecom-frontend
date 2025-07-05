@@ -5,7 +5,8 @@ import ProductList from '../features/products/components/ProductList';
 import HomePage from '../pages/HomePage';
 // These pages will be create later:
 // import ProductsPage from '../pages/ProductsPage';
-// import LoginPage from '../pages/LoginPage';
+import LoginPage from '../pages/LoginPage';
+import RegisterPage from '../pages/RegisterPage';
 // import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
 // import PrivateRoute from '../components/common/PrivateRoute';
 // import AdminRoute from '../components/common/AdminRoute';
@@ -54,8 +55,8 @@ const AppRoutes = () => {
             {/* Public Routes */}
             <Route path="/" element={<HomePage />} />
             <Route path="/products" element={<ProductList />} />
-            <Route path="/login" element={<h2>Login Page</h2>} />
-            <Route path="/register" element={<h2>Register Page</h2>} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
             <Route path="/about" element={<h2>About Page</h2>} />
             <Route path="/contact" element={<h2>Contact Page</h2>} />
 
