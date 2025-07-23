@@ -7,6 +7,7 @@ import HomePage from '../pages/HomePage';
 // import ProductsPage from '../pages/ProductsPage';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
+import ProfilePage from '../pages/ProfilePage';
 // import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
 // import PrivateRoute from '../components/common/PrivateRoute';
 // import AdminRoute from '../components/common/AdminRoute';
@@ -59,16 +60,13 @@ const AppRoutes = () => {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/about" element={<h2>About Page</h2>} />
             <Route path="/contact" element={<h2>Contact Page</h2>} />
-
+            <Route path="/profile" element={<ProfilePage />} />
             {/* Product Detail Route */}
             <Route path="/products/:id" element={<h2>Product Detail Page</h2>} />
-
             {/* Future routes - will be implemented later */}
             {/* <Route path="/cart" element={<CartPage />} /> */}
             {/* <Route path="/checkout" element={<CheckoutPage />} /> */}
-            {/* <Route path="/profile" element={<ProfilePage />} /> */}
             {/* <Route path="/orders" element={<OrdersPage />} /> */}
-
             {/* 404 Page */}
             <Route path="*" element={<h2>404 - Page Not Found</h2>} />
         </Routes>
