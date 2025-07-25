@@ -1,63 +1,65 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { addProduct as addProductApi } from '../../api/productApi';
+import {
+    addProduct as addProductApi,
+    deleteProduct as deleteProductApi,
+    fetchProducts as fetchProductsApi,
+    updateProduct as updateProductApi
+} from '../../api/productApi';
 
-// Async thunk for fetching products (placeholder for future API integration)
 export const fetchProducts = createAsyncThunk(
     'products/fetchProducts',
-    async (_, { rejectWithValue }) => {
+    async (params, { rejectWithValue }) => {
         try {
-            // TODO: Replace with actual API call
-            // const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/products`);
-            // return response.data;
-
-            // Mock data for now
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-            // Not sure what the line of code above for, will examine later.
-
-            return [
-                {
-                    id: 1,
-                    name: "Red Rose Bouquet",
-                    price: 45.99,
-                    image: "/placeholder-rose.jpg",
-                    category: "Romantic",
-                    isInStock: true,
-                    description: "Beautiful red roses perfect for special occasions"
-                },
-                {
-                    id: 2,
-                    name: "Sunflower Arrangement",
-                    price: 32.50,
-                    image: "/placeholder-sunflower.jpg",
-                    category: "Cheerful",
-                    isInStock: true,
-                    description: "Bright sunflowers to brighten your day"
-                }
-            ];
+            const data = await fetchProductsApi(params);
+            return data;
         } catch (error) {
-            return rejectWithValue(error.response?.data?.message || 'Failed to fetch products');
+            return rejectWithValue(error.toString());
         }
     }
 );
 
-// Async thunk for adding a new product
 export const addProduct = createAsyncThunk(
     'products/addProduct',
     async (productData, { rejectWithValue }) => {
         try {
-            // The API spec says it returns an object with the added product
             const data = await addProductApi(productData);
-            return data.product; // Return the newly created product
+            return data;
         } catch (error) {
             return rejectWithValue(error);
         }
     }
 );
 
+export const updateProduct = createAsyncThunk(
+    'products/updateProduct',
+    async ({ productId, productData }, { rejectWithValue }) => {
+        try {
+            const data = await updateProductApi(productId, productData);
+            return data;
+        } catch (error) {
+            return rejectWithValue(error);
+        }
+    }
+);
+
+export const deleteProduct = createAsyncThunk(
+    'products/deleteProduct',
+    async (productId, { rejectWithValue }) => {
+        try {
+            await deleteProductApi(productId);
+            return productId; // Return the ID on success
+        } catch (error) {
+            return rejectWithValue(error);
+        }
+    }
+);
+
+
 const productsSlice = createSlice({
     name: 'products',
     initialState: {
         items: [],
+        pagination: {},
         loading: false,
         error: null,
         filters: {
@@ -86,32 +88,54 @@ const productsSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
+            // Fetch Products
             .addCase(fetchProducts.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
             .addCase(fetchProducts.fulfilled, (state, action) => {
                 state.loading = false;
-                state.items = action.payload;
+                state.items = action.payload.products;
+                state.pagination = action.payload.pagination;
             })
             .addCase(fetchProducts.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             })
+            // Add Product
             .addCase(addProduct.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(addProduct.fulfilled, (state, action) => {
+            .addCase(addProduct.fulfilled, (state) => {
                 state.loading = false;
-                // Add the new product to the list in the state
-                state.items.push(action.payload);
             })
             .addCase(addProduct.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload; // The error message from rejectWithValue
+                state.error = action.payload;
+            })
+            // Update Product
+            .addCase(updateProduct.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(updateProduct.fulfilled, (state) => {
+                state.loading = false;
+            })
+            .addCase(updateProduct.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            // Delete Product
+            .addCase(deleteProduct.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(deleteProduct.fulfilled, (state) => {
+                state.loading = false;
+            })
+            .addCase(deleteProduct.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
             });
-
     }
 });
 

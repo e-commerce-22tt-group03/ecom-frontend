@@ -11,6 +11,7 @@ import RegisterPage from '../pages/RegisterPage';
 // import PrivateRoute from '../components/common/PrivateRoute';
 import AdminRoute from '../components/common/AdminRoute';
 import AddProductPage from "../pages/admin/AddProductPage";
+import EditProductPage from "../pages/admin/EditProductPage";
 import ManageProductsPage from "../pages/admin/ManageProductsPage";
 
 // const AppRoutes = () => {
@@ -76,6 +77,7 @@ const AppRoutes = () => {
                 <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
                 <Route path="/admin/products" element={<ManageProductsPage />} />
                 <Route path="/admin/products/add" element={<AddProductPage />} />
+                <Route path="/admin/products/edit/:productId" element={<EditProductPage />} />
                 <Route path="/admin/orders" element={<h2>Manage Orders</h2>} />
                 <Route path="/admin/users" element={<h2>Manage Users</h2>} />
                 <Route path="/admin/settings" element={<h2>Admin Settings</h2>} />

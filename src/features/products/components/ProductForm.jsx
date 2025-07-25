@@ -4,10 +4,10 @@ const ProductForm = ({ onSubmit, isLoading, initialData = {} }) => {
   const [formData, setFormData] = useState({
     name: initialData.name || '',
     description: initialData.description || '',
-    base_price: initialData.base_price || '',
+    base_price: initialData.basePrice || '',
     condition: initialData.condition || 'New Flower',
-    stock_quantity: initialData.stock_quantity || '',
-    image_url: initialData.image_url || '',
+    stock_quantity: initialData.stockQuantity || '',
+    image_url: initialData.imageUrl || '',
   });
 
   const handleChange = (e) => {
