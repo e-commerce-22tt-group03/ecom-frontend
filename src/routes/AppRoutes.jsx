@@ -10,7 +10,7 @@ import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
 // import PrivateRoute from '../components/common/PrivateRoute';
 import AdminRoute from '../components/common/AdminRoute';
 import AddProductPage from "../pages/admin/AddProductPage";
-import ManageProductsPage from "../pages/admin/ManageProductPage";
+import ManageProductsPage from "../pages/admin/ManageProductsPage";
 
 // const AppRoutes = () => {
 //     return (
