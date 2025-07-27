@@ -12,6 +12,7 @@ import RegisterPage from '../pages/RegisterPage';
 import AdminRoute from '../components/common/AdminRoute';
 import AddProductPage from "../pages/admin/AddProductPage";
 import EditProductPage from "../pages/admin/EditProductPage";
+import ManageOrdersPage from "../pages/admin/ManageOrdersPage";
 import ManageProductsPage from "../pages/admin/ManageProductsPage";
 
 // const AppRoutes = () => {
@@ -78,7 +79,8 @@ const AppRoutes = () => {
                 <Route path="/admin/products" element={<ManageProductsPage />} />
                 <Route path="/admin/products/add" element={<AddProductPage />} />
                 <Route path="/admin/products/edit/:productId" element={<EditProductPage />} />
-                <Route path="/admin/orders" element={<h2>Manage Orders</h2>} />
+                <Route path="/admin/orders" element={<ManageOrdersPage />} />
+                <Route path="/admin/orders/:orderId" element={<h2>Order Details Page</h2>} />
                 <Route path="/admin/users" element={<h2>Manage Users</h2>} />
                 <Route path="/admin/settings" element={<h2>Admin Settings</h2>} />
             </Route>
