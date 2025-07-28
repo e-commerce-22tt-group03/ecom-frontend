@@ -8,6 +8,7 @@ import HomePage from '../pages/HomePage';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
 import ProfilePage from '../pages/ProfilePage';
+import OrderPage from '../pages/OrderPage';
 // import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
 // import PrivateRoute from '../components/common/PrivateRoute';
 // import AdminRoute from '../components/common/AdminRoute';
@@ -58,6 +59,7 @@ const AppRoutes = () => {
             <Route path="/products" element={<ProductList />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/orders" element={<OrderPage />} />
             <Route path="/about" element={<h2>About Page</h2>} />
             <Route path="/contact" element={<h2>Contact Page</h2>} />
             <Route path="/profile" element={<ProfilePage />} />
