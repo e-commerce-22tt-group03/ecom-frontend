@@ -11,7 +11,7 @@ export const fetchProducts = createAsyncThunk(
             
             // Mock data for now
             await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-            // Not sure what the line of code above for, will examine later.
+            // This line simulates API loading time - intentional for testing loading states
 
             return [
                 {
@@ -87,4 +87,4 @@ const productsSlice = createSlice({
 });
 
 export const { setSearchTerm, setCategoryFilter, setPriceRange, clearFilters } = productsSlice.actions;
-export default productsSlice.reducer;
+export default productsSlice.reducer; 
