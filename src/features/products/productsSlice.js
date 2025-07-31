@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 // API Base URL - temporarily
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/v1';
 
 // keyword suggestions limit
 const SUGGESTIONS_LIMIT = 5;
@@ -34,7 +34,7 @@ export const fetchProducts = createAsyncThunk(
             queryParams.append('page', page.toString());
             queryParams.append('limit', limit.toString());
 
-            const response = await fetch(`${API_BASE_URL}/api/v1/products?${queryParams}`);
+            const response = await fetch(`${API_BASE_URL}/products?${queryParams}`);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -53,7 +53,7 @@ export const fetchProductById = createAsyncThunk(
     'products/fetchProductById',
     async (productId, { rejectWithValue }) => {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}`);
+            const response = await fetch(`${API_BASE_URL}/products/${productId}`);
 
             if (!response.ok) {
                 if (response.status === 404) {
@@ -75,7 +75,7 @@ export const fetchCategories = createAsyncThunk(
     'products/fetchCategories',
     async (_, { rejectWithValue}) => {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/v1/categories`);
+            const response = await fetch(`${API_BASE_URL}/categories`);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -98,7 +98,7 @@ export const fetchSuggestions = createAsyncThunk(
                 return { products: [] };
             }
 
-            const response = await fetch(`${API_BASE_URL}/api/v1/suggestions?limit=${limit}&prefix=${encodeURIComponent(prefix)}`);
+            const response = await fetch(`${API_BASE_URL}/suggestions?limit=${limit}&prefix=${encodeURIComponent(prefix)}`);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);

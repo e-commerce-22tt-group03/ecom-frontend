@@ -1,207 +1,170 @@
+import { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useState, useEffect } from 'react';
-import { Search, Filter, Grid, List, SlidersHorizontal } from 'lucide-react';
+import { 
+    Search,
+    Filter,
+    Grid,
+    List,
+    SlidersHorizontal,
+    X
+} from 'lucide-react';
+import { debounce} from 'lodash';
+
 import ProductCard from './ProductCard';
+import {
+    fetchProducts,
+    fetchCategories,
+    fetchSuggestions,
+    // fetchProductById,
+    setSearchTerm,
+    setPriceRange,
+    setConditionFilter,
+    setCategoryFilter,
+    setSortBy,
+    setPage,
+    // setLimit,
+    setViewMode,
+    setShowFilters,
+    clearFilters,
+    clearSuggestions,
+    selectAllProducts,
+    selectProductsLoading,
+    selectProductsError,
+    selectCategories,
+    selectCategoriesLoading,
+    selectSuggestions,
+    selectSuggestionsLoading,
+    selectFilters,
+    selectPagination,
+    selectViewMode,
+    selectShowFilters,
+} from '../productsSlice';
+
+const MINPRICE = 0;
+const MAXPRICE = 1000;
 
 const ProductList = () => {
-    const minPrice = 0;
-    const maxPrice = 200;
     const dispatch = useDispatch();
-    const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
-    const [sortBy, setSortBy] = useState('featured'); // 'featured', 'price-asc', 'price-desc',
-    //  'rating-asc', 'rating-desc', 'name-asc', 'name-desc', 'newest', 'latest'
-    const [filterCategory, setFilterCategory] = useState('all'); //
-    const [searchTerm, setSearchTerm] = useState('');
-    const [priceRange, setPriceRange] = useState([minPrice, maxPrice])
-    const [showFilters, setShowFilters] = useState(false);
 
-//     // This will later connect to Redux store
-//     // const { products, loading, error } = useSelector(state => state.products);
-    
-//     // Mock data for now - will be replaced with Redux state
-//     const mockProducts = [
-//         {
-//             id: 1,
-//             name: "Red Rose Bouquet",
-//             price: 45.99,
-//             image: "/placeholder-rose.jpg",
-//             category: "Romantic",
-//             isInStock: true
-//         },
-//         {
-//             id: 2,
-//             name: "Sunflower Arrangement",
-//             price: 32.50,
-//             image: "/placeholder-sunflower.jpg",
-//             category: "Cheerful",
-//             isInStock: true
-//         },
-//         {
-//             id: 3,
-//             name: "Wedding White Lilies",
-//             price: 78.00,
-//             image: "/placeholder-lily.jpg",
-//             category: "Wedding",
-//             isInStock: false
-//         }
-//     ];
+    // Redux state 
+    const products = useSelector(selectAllProducts);
+    const loading = useSelector(selectProductsLoading);
+    const error = useSelector(selectProductsError);
+    const categories = useSelector(selectCategories);
+    const categoriesLoading = useSelector(selectCategoriesLoading);
+    const suggestions = useSelector(selectSuggestions);
+    const suggestionsLoading = useSelector(selectSuggestionsLoading);
+    const filters = useSelector(selectFilters);
+    const pagination = useSelector(selectPagination);
+    const viewMode = useSelector(selectViewMode);
+    const showFilters = useSelector(selectShowFilters);
 
-//     const loading = false;
-//     const error = null;
+    // Local state for UI controls
+    const [searchInput, setSearchInput] = useState(filters.q);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [priceRangeLocal, setPriceRangeLocal] = useState([
+        filters.minPrice || MINPRICE,
+        filters.maxPrice || MAXPRICE 
+    ]);
 
-//     if (loading) {
-//         return (
-//             <div className="flex justify-center items-center min-h-64">
-//                 <span className="loading loading-spinner loading-lg"></span>
-//             </div>
-//         );
-//     }
+    ///////////////////////////////// Debounced Handlers /////////////////////////////////
 
-//     if (error) {
-//         return (
-//             <div className="alert alert-error">
-//                 <span>Error loading products: {error}</span>
-//             </div>
-//         );
-//     }
+    // Debounced search input handler
+    const debouncedSearch = useCallback(
+        debounce((searchTerm) => {
+            dispatch(setSearchTerm(searchTerm));
+            if (searchTerm.trim().length >= 2) {
+                dispatch(fetchSuggestions({ prefix: searchTerm }));
+                setShowSuggestions(true);
+            }
+            else {
+                dispatch(clearSuggestions());
+                setShowSuggestions(false);
+            }
+        }, 300),
+        [dispatch]
+    );
 
-//     return (
-//         <div className="container mx-auto px-4 py-8">
-//             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-//                 {mockProducts.map(product => (
-//                     <ProductCard key={product.id} product={product} />
-//                 ))}
-//             </div>
-//             {mockProducts.length === 0 && (
-//                 <div className="text-center py-12">
-//                     <p className="text-lg text-base-content/70">No products found</p>
-//                 </div>
-//             )}
-//         </div>
-//     );
-// }; The older version of ProductList.jsx
+    // Debounced price range filter handler
+    const debouncedPriceChange = useCallback(
+        debounce((range) => {
+            dispatch(setPriceRange(range));
+        }, 500),
+        [dispatch]
+    );
 
-    // TODO: Connect to Redux store to fetch products
-    // const { products, loading, error, categories } = useSelector(state => state.products);
-    // Mock data - enhanced product structure
-    const mockProducts = [
-        {
-            id: 1,
-            name: "Premium Red Rose Bouquet",
-            price: 89.99,
-            originalPrice: 119.99,
-            discount: 25,
-            image: "/placeholder-rose.jpg",
-            category: "Premium Bouquets",
-            rating: 4.8,
-            reviewCount: 156,
-            isInStock: true,
-            stockCount: 23,
-            isFeatured: true,
-            isNew: false,
-            tags: ["bestseller", "premium"]
-        },
+    ///////////////////////////////// Effect Hooks /////////////////////////////////
 
-        {
-            id: 2,
-            name: "Sunflower Garden Arrangement",
-            price: 65.50,
-            originalPrice: null,
-            discount: 0,
-            image: "/placeholder-sunflower.jpg",
-            category: "Seasonal",
-            rating: 4.6,
-            reviewCount: 89,
-            isInStock: true,
-            stockCount: 15,
-            isFeatured: false,
-            isNew: true,
-            tags: ["seasonal", "cheerful"]
-        },
-        
-        {
-            id: 3,
-            name: "Wedding White Lilies",
-            price: 124.00,
-            originalPrice: 145.00,
-            discount: 15,
-            image: "/placeholder-lily.jpg",
-            category: "Wedding",
-            rating: 4.9,
-            reviewCount: 203,
-            isInStock: false,
-            stockCount: 0,
-            isFeatured: true,
-            isNew: false,
-            tags: ["wedding", "elegant"]
-        },
+    useEffect(() => {
+        dispatch(fetchCategories());
+    }, [dispatch]);
 
-        {
-            id: 4,
-            name: "Mixed Seasonal Bouquet",
-            price: 45.99,
-            originalPrice: null,
-            discount: 0,
-            image: "/images/products/mixed/seasonal-bouquet-80-1200x1200mix.jpg",
-            category: "Seasonal",
-            rating: 4.4,
-            reviewCount: 67,
-            isInStock: true,
-            stockCount: 8, 
-            isFeatured: false,
-            isNew: false,
-            tags: ["mixed", "colorful"]
+    useEffect(() => {
+        dispatch(fetchProducts(filters));
+    }, [dispatch, filters]);
+
+    useEffect(() => {
+        debouncedSearch(searchInput);
+    }, [searchInput, debouncedSearch]);
+
+    useEffect(() => {
+        debouncedPriceChange(priceRangeLocal);
+    }, [priceRangeLocal, debouncedPriceChange]);
+
+    ///////////////////////////////// Local State Handlers /////////////////////////////////
+
+    const handleSearchInputChange = (e) => {
+        const value = e.target.value;
+        setSearchInput(value);
+    };
+
+    const handleSuggestionClick = (suggestion) => {
+        setSearchInput(suggestion);
+        dispatch(setSearchTerm(suggestion));
+        setShowSuggestions(false);
+        dispatch(clearSuggestions());
+    };
+
+    const handlePriceRangeChange = (index, value) => {
+        const newRange = [...priceRangeLocal];
+        newRange[index] = parseInt(value);
+
+        // Ensure min is less than max
+        if (index === 0 && newRange[0] > newRange[1]) {
+            newRange[0] = newRange[1];
         }
+        if (index === 1 && newRange[1] < newRange[0]) {
+            newRange[1] = newRange[0];
+        }
+
+        setPriceRangeLocal(newRange);
+    };
+
+    const handleClearFilters = () => {
+        dispatch(clearFilters());
+        setSearchInput('');
+        setPriceRangeLocal([MINPRICE, MAXPRICE]);
+        setShowSuggestions(false);
+        // dispatch(clearSuggestions()); // ????????????????? Should this be here?     
+    };
+
+    const conditionOptions = [
+        { value: '', label: 'All Conditions' },
+        { value: 'New Flower', label: 'New Flower' },
+        { value: 'Old Flower', label: 'Old Flower' },
+        { value: 'Low Stock', label: 'Low Stock' },
     ];
 
-    const categories = [
-        { id: 'all', name: 'All Categories', count: mockProducts.length },
-        { id: 'premium', name: 'Premium Bouquets', count: 1},
-        { id: 'seasonal', name: 'Seasonal', count: 2 },
-        { id: 'wedding', name: 'Wedding', count: 1 },
-        // { id: 'mixed', name: 'Mixed', count: 1 }
+    const sortOptions = [
+        { value: 'best_selling', label: 'Best Selling' },
+        { value: 'newest', label: 'Newest' },
+        { value: 'price_asc', label: 'Price: Low to High' },
+        { value: 'price_desc', label: 'Price: High to Low' },
+        { value: 'name_asc', label: 'Name: A-Z' },
+        { value: 'name_desc', label: 'Name: Z-A' },
     ];
 
-    const loading = false;
-    const error = null;
-
-    // Filter and sort products
-    const filteredProducts = mockProducts
-        .filter(product => {
-            // filter base on category
-            if (filterCategory !== 'all' && !product.category.toLowerCase().includes(filterCategory)) {
-                return false;
-            }
-            
-            // search base on name
-            if (searchTerm && !product.name.toLowerCase().includes(searchTerm.toLowerCase())) {
-                return false;
-            }
-
-            // filter base on price range
-            if (product.price < priceRange[0] || product.price > priceRange[1]) {
-                return false;
-            }
-
-            // other wise, this product can be shown
-            return true;
-        })
-        .sort((a, b) => {
-            switch (sortBy) {
-                case 'price-asc': return a.price - b.price;
-                case 'price-desc': return b.price - a.price;
-                case 'rating-asc': return a.rating - b.rating;
-                case 'rating-desc': return b.rating - a.rating;
-                case 'name-asc': return a.name.localeCompare(b.name);
-                case 'name-desc': return b.name.localeCompare(a.name);
-                // case 'newest': return new Date(b.createdAt) - new Date(a.createdAt);
-                case 'newest': return b.isNew - a.isNew; // Temporary solution
-                case 'latest': return b.isNew - a.isNew; // Temporary solution
-                default: return b.isFeatured - a.isFeatured; 
-            }
-        });
-    
-    if (loading) {
+    if (loading && products.length === 0) {
         return (
             <div className="container mx-auto px-4 py-8">
                 <div className="flex justify-center items-center min-h-64">
@@ -215,7 +178,7 @@ const ProductList = () => {
         <div className="container mx-auto px-4 py-8">
             {/* Page Header */}
             <div className="mb-8">
-                <h1 className="text-4xl font-bold mb-4"> Our Products</h1>
+                <h1 className="text-4xl font-bold mb-4">Our Products</h1>
                 <p className="text-lg text-base-content/70">
                     Discover our beautiful collection of fresh flowers, and arrangements
                 </p>
@@ -225,51 +188,72 @@ const ProductList = () => {
             <div className="card bg-base-100 shadow-lg mb-8">
                 <div className="card-body">
                     <div className="flex flex-col lg:flex-row gap-4 items-center">
-                        { /* Search */ }
+                        { /* Search with Autocomplete */ }
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-3 h-5 w-5 text-base-content/40" />
                             <input 
                                 type="text" 
-                                placeholder="Search products..."
+                                placeholder="Search flowers..."
                                 className="input input-bordered w-full pl-10"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                value={searchInput}
+                                onChange={handleSearchInputChange}
+                                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)} // Delay to allow click on suggestion
                             />
-                        </div>
 
-                        { /* Category Filter */ }
+                            {/* Search Suggestions */}
+                            {showSuggestions && suggestions.length > 0 && (
+                                <div className="absolute top-full left-0 right-0 bg-base-100 border border-base-300 rounded-lg shadow-lg z-50 mt-1">
+                                    {suggestions.map((suggestion, index) => (
+                                        <button
+                                            key={index}
+                                            className="w-full text-left px-4 py-2 hover:bg-base-200 first:rounded-t-lg last:rounded-b-lg"
+                                            onClick={() => handleSuggestionClick(suggestion)}
+                                        >
+                                            <Search className="inline-block w-4 h-4 mr-2 text-base-content/40" />
+                                            {suggestion}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        
+                        {/* Sort Dropdown */}
                         <select 
-                            className="select select-bordered w-full lg:w-auto"
-                            value={filterCategory}
-                            onChange={(e) => setFilterCategory(e.target.value)}
+                            className="select select-bordered w-full lg:w-auto min-w-48"
+                            value={filters.sortBy}
+                            onChange={(e) => dispatch(setSortBy(e.target.value))}
                         >
-                            {categories.map(category => (
-                                <option key={category.id} value={category.id}>
-                                    {category.name} ({category.count})
+                            {sortOptions.map(option => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
                                 </option>
                             ))}
                         </select>
 
                         { /* Advanced Filters Toggle */ }
                         <button
-                            className="btn btn-outline"
-                            onClick={() => setShowFilters(!showFilters)}
+                            className={`btn ${showFilters ? 'btn-primary' : 'btn-outline'}`}
+                            onClick={() => dispatch(setShowFilters(!showFilters))}
                         >
                             <SlidersHorizontal className="mr-2 h-4 w-4" />
                             Filters
+                            {(filters.condition || filters.categoryIds || filters.minPrice || filters.maxPrice) && (
+                                <span className="badge badge-error badge-sm ml-1">•</span>        
+                            )}
                         </button>
 
                         { /* View Mode Toggle */ }
                         <div className="join">
                             <button
                                 className={`btn join-item ${viewMode === 'grid' ? 'btn-active' : ''}`}
-                                onClick={() => setViewMode('grid')}
+                                onClick={() => dispatch(setViewMode('grid'))}
                             >
                                 <Grid className="h-4 w-4" />
                             </button>
                             <button
                                 className={`btn join-item ${viewMode === 'list' ? 'btn-active' : ''}`}
-                                onClick={() => setViewMode('list')}
+                                onClick={() => dispatch(setViewMode('list'))}
                             >
                                 <List className="h-4 w-4" />
                             </button>
@@ -278,91 +262,226 @@ const ProductList = () => {
 
                     { /* Advanced Filters */ }
                     {showFilters && (
-                        <div className="mt-6 p-4 bg-base-200 rounded-lg">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {/* Price Range */}
-                                <div>
+                        <div className="mt-6 p-6 bg-base-200 rounded-lg">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {/* Price Range - Dual Range */}
+                                <div className="lg:col-span-2">
                                     <label className="label">
                                         <span className="label-text font-semibold">Price Range</span>
                                     </label>
-                                    <div className="space-y-2">
-                                        <input 
-                                            type="range"
-                                            min= {minPrice}
-                                            max= {maxPrice}
-                                            value= {priceRange[1]} 
-                                            onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-                                            className="range range-primary"
-                                        />
-                                        <div className="flex justify-between text-sm">
-                                            <span>${priceRange[0]}</span>
-                                            <span>${priceRange[1]}</span>
+                                    <div className="space-y-4">
+                                        <div className="flex gap-4">
+                                            <div className="flex-1">
+                                                <label className="label">
+                                                    <span className="label-text-alt">Min Price</span>
+                                                </label>
+                                                <input 
+                                                    type="range"
+                                                    min={MINPRICE}
+                                                    max={MAXPRICE}
+                                                    value={priceRangeLocal[0]}
+                                                    onChange={(e) => handlePriceRangeChange(0, e.target.value)}
+                                                    className="range range-primary range-sm" 
+                                                />
+                                                <div className="text-center text-sm font-semibold">${priceRangeLocal[0]}</div>
+                                            </div>
+                                            <div className="flex-1">
+                                                <label className="label">
+                                                    <span className="label-text-alt">Max Price</span>
+                                                </label>
+                                                <input 
+                                                    type="range"
+                                                    min={MINPRICE}
+                                                    max={MAXPRICE}
+                                                    value={priceRangeLocal[1]}
+                                                    onChange={(e) => handlePriceRangeChange(1, e.target.value)}
+                                                    className="range range-primary range-sm"
+                                                />
+                                                <div className="text-center text-sm font-semibold">${priceRangeLocal[1]}</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-between text-xs text-base-content/70">
+                                            <span>${MINPRICE}</span>
+                                            <span>${MAXPRICE}</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Stock Status */}
+                                {/* Condition Filter */}
                                 <div>
                                     <label className="label">
-                                        <span className="label-text font-semibold">Availability</span>
+                                        <span className="label-text font-semibold">Condition</span>
                                     </label>
-                                    <div className="form-control">
-                                        <label className="cursor-pointer label">
-                                            <span className="label-text">In Stock Only</span>
-                                            <input type="checkbox" className="checkbox checkbox-primary" />
-                                        </label>
-                                    </div>
-                                </div>
-
-                                {/* Rating Filter */}
-                                <div>
-                                    <label className="label">
-                                        <span className="label-text font-semibold">Minimum Rating</span>
-                                    </label>
-                                    <select className="select select-bordered w-full">
-                                        <option value="">Any Rating</option>
-                                        <option value="4">4+ Stars</option>
-                                        <option value="4.5">4.5+ Stars</option>
-                                        <option value="4.8">4.8+ Stars</option>
-
-
-                                        {/* <option value="">Select Rating</option>
-                                        <option value="1">1 Star</option>
-                                        <option value="2">2 Stars</option>
-                                        <option value="3">3 Stars</option>
-                                        <option value="4">4 Stars</option>
-                                        <option value="5">5 Stars</option> */}
+                                    <select 
+                                        className="select select-bordered w-full"
+                                        value={filters.condition}
+                                        onChange={(e) => dispatch(setConditionFilter(e.target.value))}
+                                    >
+                                        {conditionOptions.map(option => (
+                                            <option key={option.value} value={option.value}>
+                                                {option.label}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
+
+                                {/* Category Filters */}
+                                <div>
+                                    <label className="label">
+                                        <span className="label-text font-semibold">Categories</span>
+                                    </label>
+                                    {categoriesLoading ? (
+                                        <div className="skeleton h-10 w-full"></div>
+                                    ) : (
+                                        <details className="dropdown w-full">
+                                            <summary className="m-1 btn btn-outline w-full justify-between">
+                                                Select Categories
+                                            </summary>
+                                            <div className="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-full max-h-60 overflow-y-auto">
+                                                <div className="space-y-3">
+                                                    {/* Flower Types */}
+                                                    {categories.flower_type?.length > 0 && (
+                                                        <div>
+                                                            <div className="font-semibold text-sm text-base-content/70 mb-2">Flower Types</div>
+                                                            {categories.flower_type.map(category => (
+                                                                <label key={category.category_id} className="cursor-pointer label justify-start gap-2">
+                                                                    <input 
+                                                                        type="checkbox"
+                                                                        className="checkbox checkbox-sm checkbox-primary"
+                                                                        checked={filters.categoryIds.includes(category.category_id.toString())}
+                                                                        onChange={(e) => {
+                                                                            const currentIds = filters.categoryIds.split(',').filter(id => id);
+                                                                            const categoryId = category.category_id.toString();
+
+                                                                            if (e.target.checked) {
+                                                                                const newIds = [...currentIds, categoryId];
+                                                                                dispatch(setCategoryFilter(newIds.join(',')));
+                                                                            } else {
+                                                                                const newIds = currentIds.filter(id => id !== categoryId);
+                                                                                dispatch(setCategoryFilter(newIds.join(',')));
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                    <span className="label-text text-sm">{category.name}</span>
+                                                                </label>                                      
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Occasions */}
+                                                    {categories.occasion?.length > 0 && (
+                                                        <div>
+                                                            <div className="font-semibold text-sm text-base-content/70 mb-2">Occasions</div>
+                                                            {categories.occasion.map(category => (
+                                                                <label key={category.category_id} className="cursor-pointer label justify-start gap-2">
+                                                                    <input 
+                                                                        type="checkbox"
+                                                                        className="checkbox checkbox-sm checkbox-primary"
+                                                                        checked={filters.categoryIds.includes(category.category_id.toString())} 
+                                                                        onChange={(e) => {
+                                                                            const currentIds = filters.categoryIds.split(',').filter(id => id);
+                                                                            const categoryId = category.category_id.toString();
+
+                                                                            if (e.target.checked) {
+                                                                                const newIds = [...currentIds, categoryId];
+                                                                                dispatch(setCategoryFilter(newIds.join(',')));
+                                                                            } else {
+                                                                                const newIds = currentIds.filter(id => id !== categoryId);
+                                                                                dispatch(setCategoryFilter(newIds.join(',')));
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                    <span className="label-text text-sm">{category.name}</span>
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </details>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Clear Filters */}
+                            <div className="flex justify-end mt-4">
+                                <button
+                                    onClick={handleClearFilters}
+                                    className="btn btn-outline btn-sm"
+                                >
+                                    <X className="mr-2 h-4 w-4" />
+                                    Clear All Filters
+                                </button>
                             </div>
                         </div>
                     )}
                 </div>
             </div>
+            
+            {/* Active Filters Display */}
+            {(filters.q || filters.condition || filters.categoryIds || filters.minPrice || filters.maxPrice) && (
+                <div className="flex flex-wrap gap-2 mb-6">
+                    {filters.q && (
+                        <div className="badge badge-primary gap-2">
+                            Search: "{filters.q}"
+                            <X className="h-3 w-3 cursor-pointer" onClick={() => {
+                                // dispatch(setSearchTerm(''));
+                                setSearchInput('');
+                                dispatch(setSearchTerm(''));
+                            }} />
+                        </div>
+                    )}
+                    {filters.condition && (
+                        <div className="badge badge-secondary gap-2">
+                            {filters.condition}
+                            <X className="h-3 w-3 cursor-pointer" onClick={() => dispatch(setConditionFilter(''))} />
+                        </div>
+                    )}
+                    {(filters.minPrice || filters.maxPrice) && (
+                        <div className="badge badge-accent gap-2">
+                            ${filters.minPrice || MINPRICE} - ${filters.maxPrice || MAXPRICE}
+                            <X className="h-3 w-3 cursor-pointer" onClick={() => {
+                                dispatch(setPriceRange([null, null]));
+                                setPriceRangeLocal([0, 200]);
+                            }} />
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Error Display */}
+            {error && (
+                <div className="alert alert-error mb-6">
+                    <span>Error loading products: {error}</span>
+                </div>
+            )}
 
             {/* Results Header */}
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <span className="text-lg font-semibold">
-                        {filteredProducts.length} products found
+                        {pagination.totalItems} products found
                     </span>
-                    {searchTerm && (
+                    {filters.q && (
                         <span className="text-base-content/70 ml-2">
-                            for "{searchTerm}"
+                            for "{filters.q}"
                         </span>
                     )}
                 </div>
+                {loading && (
+                    <span className="loading loading-spinner loading-sm"></span>
+                )}
             </div>
 
-            {/* Product Grid/List */}
+            {/* Products Grid/List */}
             <div className={`${
                 viewMode === 'grid'
                 ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
                 : 'space-y-4'
             }`}>
-                {filteredProducts.map(product => (
+                {products.map(product => (
                     <ProductCard
-                        key={product.id}
+                        key={product.productId}
                         product={product}
                         viewMode={viewMode}
                     />
@@ -370,7 +489,7 @@ const ProductList = () => {
             </div>
 
             {/* No Results */}
-            {filteredProducts.length === 0 && (
+            {!loading && products.length === 0 && (
                 <div className="text-center py-12">
                     <div className="text-6xl mb-4">🌸</div>
                     <h3 className="text-2xl font-bold mb-2">No products found</h3>
@@ -378,12 +497,7 @@ const ProductList = () => {
                         Try adjusting your search or filter settings.
                     </p>
                     <button
-                        onClick={() => {
-                            setSearchTerm('');
-                            setFilterCategory('all');
-                            setPriceRange([minPrice, maxPrice]);
-                            // setShowFilters(false);
-                        }}
+                        onClick={handleClearFilters}
                         className="btn btn-primary"
                     >
                         Clear Filters
@@ -391,12 +505,45 @@ const ProductList = () => {
                 </div>
             )}
 
-            {/* Load More / Pagination */}
-            {filteredProducts.length > 0 && (
-                <div className="text-center mt-12">
-                    <button className="btn btn-outline btn-lg">
-                        Load More Products
-                    </button>
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+                <div className="flex justify-center mt-12">
+                    <div className="join">
+                        <button
+                            className="join-item btn"
+                            disabled={pagination.currentPage === 1}
+                            onClick={() => dispatch(setPage(pagination.currentPage - 1))}
+                        >
+                            Previous
+                        </button>
+
+                        {/* Page Numbers */}
+                        {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                            const page = pagination.currentPage <= 3
+                                ? i + 1
+                                : pagination.currentPage + i - 2;
+                            
+                            if (page > pagination.totalPages) return null;
+
+                            return (
+                                <button
+                                    key={page}
+                                    className={`join-item btn ${pagination.currentPage === page ? 'btn-active' : ''}`}
+                                    onClick={() => dispatch(setPage(page))}
+                                >
+                                    {page}
+                                </button>
+                            );
+                        })}
+
+                        <button 
+                            className="join-item btn"
+                            disabled={pagination.currentPage === pagination.totalPages}
+                            onClick={() => dispatch(setPage(pagination.currentPage + 1))}
+                        >
+                            Next
+                        </button>
+                    </div>
                 </div>
             )}
         </div>
