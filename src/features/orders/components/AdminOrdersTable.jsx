@@ -6,11 +6,10 @@ const AdminOrdersTable = ({ orders }) => {
 
   const getStatusBadgeClass = (status) => {
     switch (status) {
-      case 'Pending': return 'badge-warning';
       case 'Processing': return 'badge-info';
-      case 'Out for Delivery': return 'badge-primary';
+      case 'Delivering': return 'badge-primary';
       case 'Completed': return 'badge-success';
-      case 'Canceled': return 'badge-error';
+      case 'Cancelled': return 'badge-error';
       default: return 'badge-ghost';
     }
   };
@@ -25,7 +24,7 @@ const AdminOrdersTable = ({ orders }) => {
         <thead>
           <tr>
             <th>Order ID</th>
-            <th>Customer</th>
+            <th>User ID</th>
             <th>Date</th>
             <th>Total</th>
             <th>Status</th>
@@ -34,11 +33,11 @@ const AdminOrdersTable = ({ orders }) => {
         </thead>
         <tbody>
           {orders.map((order) => (
-            <tr key={order.orderId} className="hover">
-              <td className="font-mono">{order.orderId}</td>
-              <td>{order.customerName}</td>
-              <td>{new Date(order.orderDate).toLocaleDateString()}</td>
-              <td>${order.totalAmount.toFixed(2)}</td>
+            <tr key={order.order_id} className="hover">
+              <td className="font-mono">#{order.order_id}</td>
+              <td>{order.user_id}</td>
+              <td>{new Date(order.order_date).toLocaleDateString()}</td>
+              <td>${parseFloat(order.total_amount).toFixed(2)}</td>
               <td>
                 <span className={`badge ${getStatusBadgeClass(order.status)}`}>
                   {order.status}
@@ -46,7 +45,7 @@ const AdminOrdersTable = ({ orders }) => {
               </td>
               <td>
                 <button
-                  onClick={() => handleViewDetails(order.orderId)}
+                  onClick={() => handleViewDetails(order.order_id)}
                   className="btn btn-ghost btn-sm"
                 >
                   <Eye className="w-4 h-4" /> View Details
