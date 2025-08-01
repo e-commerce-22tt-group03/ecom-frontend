@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import {
-    ShoppingCart,
-    Heart,
-    ArrowLeft,
+import { 
+    ShoppingCart, 
+    Heart, 
+    ArrowLeft, 
     Star,
     Minus,
     Plus,
@@ -21,7 +21,6 @@ import{
     selectProductLoading,
     selectProductError
 } from '../features/products/productsSlice';
-import { base } from 'daisyui/imports';
 
 const ProductDetailPage = () => {
     const { id } = useParams();
@@ -32,24 +31,24 @@ const ProductDetailPage = () => {
     const product = useSelector(selectCurrentProduct);
     const loading = useSelector(selectProductLoading);
     const error = useSelector(selectProductError);
-
+    
     // State for product interactions
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
     const [isWishlisted, setIsWishlisted] = useState(false);
     const [activeTab, setActiveTab] = useState('details');
 
-    
-
     useEffect(() => {
-        dispatch(fetchProductById(id));
+        if (id) {
+            dispatch(fetchProductById(id));
+        }
         
         return () => {
             dispatch(clearCurrentProduct());
         };
     }, [id, dispatch]);
 
-    // Reset selected image and quantity when product changes
+    // Reset selected image when product changes
     useEffect(() => {
         if (product) {
             setSelectedImage(0);
@@ -65,15 +64,26 @@ const ProductDetailPage = () => {
     };
 
     const handleAddToCart = () => {
-        // TODO: Dispatch add to cart action
-        // dispatch(addToCart({ productId: product.id, quantity }));
-        console.log(`Adding ${quantity}x ${product.name} to cart`); 
+        // TODO: Dispatch add to cart action when cart management is ready
+        console.log(`Adding ${quantity}x ${product.name} to cart`);
     };
 
     const handleAddToWishlist = () => {
         setIsWishlisted(!isWishlisted);
-        // TODO: Dispatch action to add/remove product from wishlist
-        // dispatch(toggleWishlist(product.id));
+        // TODO: Dispatch wishlist action
+    };
+
+    const renderStars = (rating) => {
+        return [...Array(5)].map((_, i) => (
+            <Star 
+                key={i} 
+                className={`h-5 w-5 ${
+                    i < Math.floor(rating) 
+                        ? 'text-yellow-400 fill-current' 
+                        : 'text-gray-300'
+                }`} 
+            />
+        ));
     };
 
     if (loading) {
@@ -93,7 +103,7 @@ const ProductDetailPage = () => {
                     <h2 className="text-2xl font-bold mb-4">Error Loading Product</h2>
                     <p className="text-base-content/70 mb-4">{error}</p>
                     <div className="flex gap-4 justify-center">
-                        <button
+                        <button 
                             onClick={() => dispatch(fetchProductById(id))}
                             className="btn btn-primary"
                         >
@@ -132,24 +142,19 @@ const ProductDetailPage = () => {
         basePrice,
         appliedRuleName,
         dynamicPrice,
+        averageRating = 0,
         categories = [],
         reviews = []
     } = product;
 
     const isInStock = stockQuantity > 0;
-    const isLowStock = stockQuantity > 0 && stockQuantity <= 5;
+    const isLowStock = stockQuantity <= 5 && stockQuantity > 0;
     const discount = basePrice > dynamicPrice 
         ? Math.round(((basePrice - dynamicPrice) / basePrice) * 100)
         : 0;
 
     // Create multiple image array (since API only provides one, so we will duplicate it)
     const images = [imageUrl, imageUrl, imageUrl];
-    
-    ///////////////////////////////////////////////// Temporary calculate average rating. 
-    ///////////////////////////////////////////////// will update on the new API response later
-    const averageRating = reviews.length > 0
-        ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
-        : 0;
 
     const renderTabContent = () => {
         switch (activeTab) {
@@ -159,28 +164,30 @@ const ProductDetailPage = () => {
                         <div>
                             <h3 className="text-xl font-semibold mb-4">Product Details</h3>
                             <p className="text-base-content/80 leading-relaxed mb-6">
-                                {description}
+                                {description || "No description available for this product."}
                             </p>
                         </div>
-
-                        <div>
-                            <h3 className="text-xl font-semibold mb-4">Categories</h3>
-                            <div className="flex flex-wrap gap-2">
-                                {categories.map(category => (
-                                    <span
-                                        key={category.categoryId}
-                                        className={`badge ${
-                                            category.categoryType === 'Flower Type'
-                                                ? 'badge-primary'
-                                                : 'badge-secondary'
-                                        }`}
-                                    >
-                                        {category.name}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
                         
+                        {categories.length > 0 && (
+                            <div>
+                                <h3 className="text-xl font-semibold mb-4">Categories</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {categories.map(category => (
+                                        <span 
+                                            key={category.categoryId} 
+                                            className={`badge ${
+                                                category.categoryType === 'Flower Type' 
+                                                    ? 'badge-primary' 
+                                                    : 'badge-secondary'
+                                            }`}
+                                        >
+                                            {category.name}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {appliedRuleName && (
                             <div className="alert alert-info">
                                 <span>🔖 Special pricing: {appliedRuleName}</span>
@@ -188,7 +195,7 @@ const ProductDetailPage = () => {
                         )}
                     </div>
                 );
-
+                
             case 'specifications':
                 return (
                     <div className="space-y-4">
@@ -210,6 +217,14 @@ const ProductDetailPage = () => {
                                 <span className="font-semibold">Base Price:</span>
                                 <span>${basePrice}</span>
                             </div>
+                            <div className="flex justify-between py-2 border-b">
+                                <span className="font-semibold">Current Price:</span>
+                                <span>${dynamicPrice}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b">
+                                <span className="font-semibold">Average Rating:</span>
+                                <span>{averageRating.toFixed(1)}/5</span>
+                            </div>
                             {categories.map(category => (
                                 <div key={category.categoryId} className="flex justify-between py-2 border-b">
                                     <span className="font-semibold">{category.categoryType}:</span>
@@ -219,7 +234,7 @@ const ProductDetailPage = () => {
                         </div>
                     </div>
                 );
-            
+                
             case 'care':
                 return (
                     <div className="space-y-4">
@@ -237,7 +252,7 @@ const ProductDetailPage = () => {
                         </div>
                     </div>
                 );
-            
+                
             case 'reviews':
                 return (
                     <div className="space-y-6">
@@ -246,23 +261,14 @@ const ProductDetailPage = () => {
                             {reviews.length > 0 && (
                                 <div className="flex items-center gap-2">
                                     <div className="flex items-center">
-                                        {[...Array(5)].map((_, i) => (
-                                            <Star 
-                                                key={i}
-                                                className={`h-5 w-5 ${
-                                                    i < Math.floor(averageRating)
-                                                        ? 'text-yellow-400 fill-current'
-                                                        : 'text-gray-300'
-                                                }`}
-                                            />
-                                        ))}
+                                        {renderStars(averageRating)}
                                     </div>
                                     <span className="font-semibold">{averageRating.toFixed(1)}</span>
                                     <span className="text-base-content/70">({reviews.length} reviews)</span>
                                 </div>
                             )}
                         </div>
-
+                        
                         {reviews.length > 0 ? (
                             <div className="space-y-4">
                                 {reviews.map(review => (
@@ -280,24 +286,17 @@ const ProductDetailPage = () => {
                                                     <div>
                                                         <div className="font-semibold">{review.user.name}</div>
                                                         <div className="text-sm text-base-content/70">
-                                                            {new Date(review.createAt).toLocaleDateString()}
+                                                            {new Date(review.createdAt).toLocaleDateString()}
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center">
-                                                    {[...Array(5)].map((_, i) => (
-                                                        <Star 
-                                                            key={i}
-                                                            className={`h-4 w-4 ${
-                                                                i < review.rating
-                                                                    ? 'text-yellow-400 fill-current'
-                                                                    : 'text-gray-300'
-                                                            }`}
-                                                        />
-                                                    ))}
+                                                    {renderStars(review.rating)}
                                                 </div>
                                             </div>
-                                            <p className="text-base-content/80">{review.comment}</p>
+                                            {review.comment && (
+                                                <p className="text-base-content/80">{review.comment}</p>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -311,7 +310,7 @@ const ProductDetailPage = () => {
                         )}
                     </div>
                 );
-
+                
             default:
                 return null;
         }
@@ -337,9 +336,12 @@ const ProductDetailPage = () => {
                     {/* Main Image */}
                     <div className="aspect-square rounded-2xl overflow-hidden bg-base-200 relative group">
                         <img 
-                            src={images[selectedImage] || imageUrl} // currently each product only have 1 image 
+                            src={images[selectedImage] || imageUrl} 
                             alt={name}
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            onError={(e) => {
+                                e.target.src = "/placeholder-flower.jpg";
+                            }}
                         />
                         {discount > 0 && (
                             <div className="absolute top-4 left-4 bg-error text-error-content px-3 py-1 rounded-full text-sm font-semibold">
@@ -354,24 +356,29 @@ const ProductDetailPage = () => {
                         </button>
                     </div>
                     
-                    {/* Thumbnail Images */}
-                    <div className="grid grid-cols-3 gap-3">
-                        {images.map((image, index) => (
-                            <button 
-                                key={index}
-                                onClick={() => setSelectedImage(index)}
-                                className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
-                                    selectedImage === index ? 'border-primary' : 'border-base-300 hover:border-primary/50'
-                                }`}
-                            >
-                                <img 
-                                    src={image || imageUrl} 
-                                    alt={`${name} ${index + 1}`} 
-                                    className="w-full h-full object-cover"
-                                />
-                            </button>
-                        ))}
-                    </div>
+                    {/* Thumbnail Images*/}
+                    {imageUrl && (
+                        <div className="grid grid-cols-3 gap-3">
+                            {images.map((image, index) => (
+                                <button 
+                                    key={index}
+                                    onClick={() => setSelectedImage(index)}
+                                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+                                        selectedImage === index ? 'border-primary' : 'border-base-300 hover:border-primary/50'
+                                    }`}
+                                >
+                                    <img 
+                                        src={image || imageUrl} 
+                                        alt={`${name} ${index + 1}`} 
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            e.target.src = "/placeholder-flower.jpg";
+                                        }}
+                                    />
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Product Information */}
@@ -395,19 +402,10 @@ const ProductDetailPage = () => {
                         <h1 className="text-3xl font-bold mb-3">{name}</h1>
                         
                         {/* Rating */}
-                        {reviews.length > 0 && (
+                        {averageRating > 0 && (
                             <div className="flex items-center gap-2 mb-4">
                                 <div className="flex items-center">
-                                    {[...Array(5)].map((_, i) => (
-                                        <Star 
-                                            key={i} 
-                                            className={`h-5 w-5 ${
-                                                i < Math.floor(averageRating) 
-                                                    ? 'text-yellow-400 fill-current' 
-                                                    : 'text-gray-300'
-                                            }`} 
-                                        />
-                                    ))}
+                                    {renderStars(averageRating)}
                                 </div>
                                 <span className="text-lg font-semibold">{averageRating.toFixed(1)}</span>
                                 <span className="text-base-content/70">({reviews.length} reviews)</span>
@@ -429,7 +427,7 @@ const ProductDetailPage = () => {
                             </span>
                         )}
                     </div>
-
+                    
 {/* Should we really show this?------------------------------------------------------------------ */}
                     {/* Applied Rule */}
                     {appliedRuleName && (
@@ -452,10 +450,12 @@ const ProductDetailPage = () => {
                     </div>
 
                     {/* Description */}
-                    <div>
-                        <h3 className="text-xl font-semibold mb-3">Description</h3>
-                        <p className="text-base-content/80 leading-relaxed">{description}</p>
-                    </div>
+                    {description && (
+                        <div>
+                            <h3 className="text-xl font-semibold mb-3">Description</h3>
+                            <p className="text-base-content/80 leading-relaxed">{description}</p>
+                        </div>
+                    )}
 
                     {/* Quantity & Add to Cart */}
                     <div className="space-y-4">
@@ -531,32 +531,32 @@ const ProductDetailPage = () => {
             {/* Product Details Tabs */}
             <div className="mb-12">
                 <div className="tabs tabs-boxed mb-6">
-                    <button
+                    <button 
                         className={`tab ${activeTab === 'details' ? 'tab-active' : ''}`}
                         onClick={() => setActiveTab('details')}
                     >
                         Details
                     </button>
-                    <button
+                    <button 
                         className={`tab ${activeTab === 'specifications' ? 'tab-active' : ''}`}
                         onClick={() => setActiveTab('specifications')}
                     >
                         Specifications
                     </button>
-                    <button
+                    <button 
                         className={`tab ${activeTab === 'care' ? 'tab-active' : ''}`}
                         onClick={() => setActiveTab('care')}
                     >
                         Care Instructions
                     </button>
-                    <button
+                    <button 
                         className={`tab ${activeTab === 'reviews' ? 'tab-active' : ''}`}
                         onClick={() => setActiveTab('reviews')}
                     >
                         Reviews ({reviews.length})
                     </button>
                 </div>
-
+                
                 <div className="bg-base-100 p-6 rounded-lg shadow-lg">
                     {renderTabContent()}
                 </div>

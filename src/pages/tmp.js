@@ -186,15 +186,12 @@ const productsSlice = createSlice({
         
         // Filters
         filters: {
-            q: '',                                  // Search term
-            minPrice: null,                         // Minimum price
-            maxPrice: null,                         // Maximum price
-            condition: '',                          // 'New Flower', 'Old Flower', 
-                                                    // 'Low Stock'
-            categoryIds: '',                        // Comma-separated category IDs
-            sortBy: 'best_selling',                 // 'sortBy' options: 'price_asc',
-                                                    // 'price_desc', 'name_asc', 'name_desc',
-                                                    // 'newest', 'best_selling'
+            q: '',
+            minPrice: null,
+            maxPrice: null,
+            condition: '',
+            categoryIds: '',
+            sortBy: 'best_selling',
             page: 1,
             limit: 24
         }

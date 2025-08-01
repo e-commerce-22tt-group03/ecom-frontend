@@ -13,23 +13,25 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
         basePrice: originalPrice = null,
         imageUrl: image = "/placeholder-flower.jpg",
         condition = "New Flower",
-        stockQuantity = 0
+        stockQuantity = 0,
+        averageRating = 0,
+        totalSold = 0
     } = product || {};
 
-    // Calculate discount if there's a price difference between dynamic and base price
-    const discount = originalPrice && originalPrice > price
+    // Calculate discount if there's a price difference
+    const discount = originalPrice && originalPrice > price 
         ? Math.round(((originalPrice - price) / originalPrice) * 100)
         : 0;
 
     const isInStock = stockQuantity > 0;
-    const isLowStock = stockQuantity > 0 && stockQuantity <= 5;
+    const isLowStock = stockQuantity <= 5 && stockQuantity > 0;
     const isNew = condition === 'New Flower';
-
+    const isBestSelling = totalSold > 10; // May adjust this threshold
 
     const handleAddToCart = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        // TODO: Dispatch add to cart action
+        // TODO: Dispatch add to cart action when cart management is ready
         console.log(`Adding ${name} to cart`);
     };
 
@@ -40,6 +42,19 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
         // TODO: Dispatch wishlist action
     };
 
+    const renderStars = (rating) => {
+        return [...Array(5)].map((_, i) => (
+            <Star 
+                key={i} 
+                className={`h-3 w-3 ${
+                    i < Math.floor(rating) 
+                        ? 'text-yellow-400 fill-current' 
+                        : 'text-gray-300'
+                }`} 
+            />
+        ));
+    };
+
     if (viewMode === 'list') {
         return (
             <div className="card lg:card-side bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300">
@@ -48,6 +63,9 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
                         src={image} 
                         alt={name}
                         className="w-full h-48 lg:h-full object-cover"
+                        onError={(e) => {
+                            e.target.src = "/placeholder-flower.jpg";
+                        }}
                     />
                 </figure>
                 <div className="card-body flex-1">
@@ -61,6 +79,11 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
                                 }`}>
                                     {condition}
                                 </span>
+                                {isBestSelling && (
+                                    <span className="badge badge-primary badge-sm">
+                                        Best Seller
+                                    </span>
+                                )}
                                 {isLowStock && (
                                     <span className="badge badge-warning badge-sm">
                                         Only {stockQuantity} left!
@@ -68,6 +91,25 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
                                 )}
                             </div>
                             <h2 className="card-title text-xl">{name}</h2>
+                            
+                            {/* Rating and Sales */}
+                            <div className="flex items-center gap-4 mt-2">
+                                {averageRating > 0 && (
+                                    <div className="flex items-center gap-1">
+                                        <div className="flex items-center">
+                                            {renderStars(averageRating)}
+                                        </div>
+                                        <span className="text-sm text-base-content/70">
+                                            {averageRating.toFixed(1)}
+                                        </span>
+                                    </div>
+                                )}
+                                {totalSold > 0 && (
+                                    <span className="text-sm text-base-content/70">
+                                        {totalSold} sold
+                                    </span>
+                                )}
+                            </div>
                         </div>
                         
                         <div className="text-right">
@@ -119,6 +161,9 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
                     src={image} 
                     alt={name}
                     className="rounded-xl h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    onError={(e) => {
+                        e.target.src = "/placeholder-flower.jpg";
+                    }}
                 />
                 
                 {/* Badges */}
@@ -130,6 +175,9 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
                     )}
                     {isNew && (
                         <span className="badge badge-success">New</span>
+                    )}
+                    {isBestSelling && (
+                        <span className="badge badge-primary">Best Seller</span>
                     )}
                     {condition === 'Low Stock' && (
                         <span className="badge badge-warning">Low Stock</span>
@@ -161,7 +209,7 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
             </figure>
             
             <div className="card-body">
-                {/* Condition Badge */} 
+                {/* Condition Badge */}
                 <div className="flex items-center justify-between mb-2">
                     <span className={`badge badge-sm ${
                         condition === 'New Flower' ? 'badge-success' :
@@ -178,6 +226,28 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
                 </div>
 
                 <h2 className="card-title text-lg font-semibold line-clamp-2">{name}</h2>
+
+                {/* Rating and Sales */}
+                <div className="flex items-center justify-between mt-1">
+                    {averageRating > 0 ? (
+                        <div className="flex items-center gap-1">
+                            <div className="flex items-center">
+                                {renderStars(averageRating)}
+                            </div>
+                            <span className="text-xs text-base-content/70">
+                                {averageRating.toFixed(1)}
+                            </span>
+                        </div>
+                    ) : (
+                        <span className="text-xs text-base-content/50">No ratings yet</span>
+                    )}
+                    
+                    {totalSold > 0 && (
+                        <span className="text-xs text-base-content/70">
+                            {totalSold} sold
+                        </span>
+                    )}
+                </div>
 
                 {/* Price */}
                 <div className="flex items-center justify-between mt-2">
