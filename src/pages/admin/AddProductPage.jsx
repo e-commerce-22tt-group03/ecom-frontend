@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import ProductForm from '../../features/products/components/ProductForm';
-import { addProduct } from '../../features/products/productsSlice';
+import { addProduct, fetchProducts } from '../../features/products/productsSlice';
 
 const AddProductPage = () => {
   const dispatch = useDispatch();
@@ -13,6 +13,7 @@ const AddProductPage = () => {
     if (addProduct.fulfilled.match(resultAction)) {
       // On success, navigate to the products list or dashboard
       alert('Product added successfully!');
+      dispatch(fetchProducts());
       navigate('/admin/products');
     } else {
       // On failure, the error is already in the state

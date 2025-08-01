@@ -3,7 +3,7 @@ import Sidebar from '../admin/Sidebar';
 
 const AdminLayout = () => {
   return (
-    <div className="flex gap-8">
+    <div className="flex gap-2 p-2 items-start">
       <Sidebar />
       <main className="flex-grow bg-base-100 p-6 rounded-lg shadow-lg">
         <Outlet />
