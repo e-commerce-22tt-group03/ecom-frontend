@@ -1,60 +1,3 @@
-// import { Link } from 'react-router-dom';
-// import { ShoppingCart, Heart } from 'lucide-react';
-
-// const ProductCard = ({ product }) => {
-//     // Placeholder data structure - will be replaced with real data from props
-//     const {
-//         id = 1,
-//         name = "Sample Flower",
-//         price = 29.99,
-//         image = "/placeholder-flower.jpg",
-//         category = "Bouquet",
-//         isInStock = true
-//     } = product || {};
-
-//     return (
-//         <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300">
-//             <figure className="px-4 pt-4">
-//                 <img 
-//                     src={image} 
-//                     alt={name}
-//                     className="rounded-xl h-48 w-full object-cover"
-//                 />
-//             </figure>
-//             <div className="card-body">
-//                 <h2 className="card-title text-lg font-semibold">{name}</h2>
-//                 <p className="text-sm text-base-content/70">{category}</p>
-//                 <div className="flex items-center justify-between mt-2">
-//                     <span className="text-xl font-bold text-primary">${price}</span>
-//                     <span className={`badge ${isInStock ? 'badge-success' : 'badge-error'}`}>
-//                         {isInStock ? 'In Stock' : 'Out of Stock'}
-//                     </span>
-//                 </div>
-//                 <div className="card-actions justify-between mt-4">
-//                     {/* Link to product details, not yet implemented */}
-//                     <Link to={`/products/${id}`} className="btn btn-outline btn-sm">
-//                         View Details
-//                     </Link>
-//                     <div className="flex gap-2">
-//                         <button className="btn btn-ghost btn-sm btn-square">
-//                             <Heart className="h-4 w-4" />
-//                         </button>
-//                         <button 
-//                             className="btn btn-primary btn-sm"
-//                             disabled={!isInStock}
-//                         >
-//                             <ShoppingCart className="h-4 w-4" />
-//                             Add to Cart
-//                         </button>
-//                     </div>
-//                 </div>
-//             </div>
-//         </div>
-//     );
-// };
-
-// export default ProductCard;
-
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Heart, Star, Eye } from 'lucide-react';
 import { useState } from 'react';
@@ -62,22 +5,26 @@ import { useState } from 'react';
 const ProductCard = ({ product, viewMode = 'grid' }) => {
     const [isWishlisted, setIsWishlisted] = useState(false);
     
+    // Map backend data structure to component
     const {
-        id = 1,
+        productId: id,
         name = "Sample Flower",
-        price = 29.99,
-        originalPrice = null,
-        discount = 0,
-        image = "/placeholder-flower.jpg",
-        category = "Bouquet",
-        isInStock = true,
-        stockCount = 0,
-        rating = 0,
-        reviewCount = 0,
-        isNew = false,
-        isFeatured = false,
-        tags = []
+        dynamicPrice: price = 29.99,
+        basePrice: originalPrice = null,
+        imageUrl: image = "/placeholder-flower.jpg",
+        condition = "New Flower",
+        stockQuantity = 0
     } = product || {};
+
+    // Calculate discount if there's a price difference between dynamic and base price
+    const discount = originalPrice && originalPrice > price
+        ? Math.round(((originalPrice - price) / originalPrice) * 100)
+        : 0;
+
+    const isInStock = stockQuantity > 0;
+    const isLowStock = stockQuantity > 0 && stockQuantity <= 5;
+    const isNew = condition === 'New Flower';
+
 
     const handleAddToCart = (e) => {
         e.preventDefault();
@@ -107,45 +54,33 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
                     <div className="flex justify-between items-start">
                         <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
-                                <span className="badge badge-outline badge-sm">{category}</span>
-                                {isNew && <span className="badge badge-success badge-sm">New</span>}
-                                {isFeatured && <span className="badge badge-primary badge-sm">Featured</span>}
+                                <span className={`badge badge-sm ${
+                                    condition === 'New Flower' ? 'badge-success' :
+                                    condition === 'Low Stock' ? 'badge-warning' :
+                                    'badge-neutral'
+                                }`}>
+                                    {condition}
+                                </span>
+                                {isLowStock && (
+                                    <span className="badge badge-warning badge-sm">
+                                        Only {stockQuantity} left!
+                                    </span>
+                                )}
                             </div>
                             <h2 className="card-title text-xl">{name}</h2>
-                            
-                            {/* Rating */}
-                            {rating > 0 && (
-                                <div className="flex items-center gap-2 mt-2">
-                                    <div className="flex items-center">
-                                        {[...Array(5)].map((_, i) => (
-                                            <Star 
-                                                key={i} 
-                                                className={`h-4 w-4 ${
-                                                    i < Math.floor(rating) 
-                                                        ? 'text-yellow-400 fill-current' 
-                                                        : 'text-gray-300'
-                                                }`} 
-                                            />
-                                        ))}
-                                    </div>
-                                    <span className="text-sm text-base-content/70">
-                                        {rating} ({reviewCount} reviews)
-                                    </span>
-                                </div>
-                            )}
                         </div>
                         
                         <div className="text-right">
                             <div className="flex items-center gap-2 mb-2">
                                 <span className="text-2xl font-bold text-primary">${price}</span>
-                                {originalPrice && (
+                                {originalPrice && originalPrice > price && (
                                     <span className="text-sm text-base-content/50 line-through">
                                         ${originalPrice}
                                     </span>
                                 )}
                             </div>
                             <span className={`badge ${isInStock ? 'badge-success' : 'badge-error'}`}>
-                                {isInStock ? 'In Stock' : 'Out of Stock'}
+                                {isInStock ? `${stockQuantity} in stock` : 'Out of Stock'}
                             </span>
                         </div>
                     </div>
@@ -196,8 +131,8 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
                     {isNew && (
                         <span className="badge badge-success">New</span>
                     )}
-                    {isFeatured && (
-                        <span className="badge badge-primary">Featured</span>
+                    {condition === 'Low Stock' && (
+                        <span className="badge badge-warning">Low Stock</span>
                     )}
                 </div>
 
@@ -226,44 +161,29 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
             </figure>
             
             <div className="card-body">
-                {/* Category & Tags */}
-                <div className="flex items-center gap-1 mb-2">
-                    <span className="badge badge-outline badge-sm">{category}</span>
-                    {tags.slice(0, 2).map(tag => (
-                        <span key={tag} className="badge badge-ghost badge-xs">
-                            {tag}
+                {/* Condition Badge */} 
+                <div className="flex items-center justify-between mb-2">
+                    <span className={`badge badge-sm ${
+                        condition === 'New Flower' ? 'badge-success' :
+                        condition === 'Low Stock' ? 'badge-warning' :
+                        'badge-neutral'
+                    }`}>
+                        {condition}
+                    </span>
+                    {isLowStock && (
+                        <span className="text-xs text-warning font-semibold">
+                            Only {stockQuantity} left!
                         </span>
-                    ))}
+                    )}
                 </div>
 
                 <h2 className="card-title text-lg font-semibold line-clamp-2">{name}</h2>
-                
-                {/* Rating */}
-                {rating > 0 && (
-                    <div className="flex items-center gap-2 mt-1">
-                        <div className="flex items-center">
-                            {[...Array(5)].map((_, i) => (
-                                <Star 
-                                    key={i} 
-                                    className={`h-3 w-3 ${
-                                        i < Math.floor(rating) 
-                                            ? 'text-yellow-400 fill-current' 
-                                            : 'text-gray-300'
-                                    }`} 
-                                />
-                            ))}
-                        </div>
-                        <span className="text-xs text-base-content/70">
-                            ({reviewCount})
-                        </span>
-                    </div>
-                )}
 
                 {/* Price */}
                 <div className="flex items-center justify-between mt-2">
                     <div className="flex items-center gap-2">
                         <span className="text-xl font-bold text-primary">${price}</span>
-                        {originalPrice && (
+                        {originalPrice && originalPrice > price && (
                             <span className="text-sm text-base-content/50 line-through">
                                 ${originalPrice}
                             </span>
@@ -273,13 +193,6 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
                         {isInStock ? 'In Stock' : 'Out of Stock'}
                     </span>
                 </div>
-
-                {/* Stock Warning */}
-                {isInStock && stockCount <= 5 && stockCount > 0 && (
-                    <div className="text-xs text-warning font-semibold">
-                        Only {stockCount} left!
-                    </div>
-                )}
 
                 <div className="card-actions justify-between mt-4">
                     <Link to={`/products/${id}`} className="btn btn-outline btn-sm flex-1">
