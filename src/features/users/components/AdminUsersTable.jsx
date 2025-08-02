@@ -11,7 +11,7 @@ const AdminUsersTable = ({ users, onEditRole, onDelete }) => {
             <th>Email</th>
             <th>Role</th>
             <th>Joined On</th>
-            <th>Actions</th>
+            <th className="pl-6">Actions</th>
           </tr>
         </thead>
         <tbody>

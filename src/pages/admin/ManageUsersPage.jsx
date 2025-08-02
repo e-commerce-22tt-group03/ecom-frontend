@@ -46,7 +46,7 @@ const ManageUsersPage = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Manage Users</h1>
+      <h1 className="text-3xl font-bold mb-6 ml-4">Manage Users</h1>
 
       <div className="card bg-base-100 shadow-lg p-4 mb-6">
         <label className="form-control w-full sm:w-auto">
