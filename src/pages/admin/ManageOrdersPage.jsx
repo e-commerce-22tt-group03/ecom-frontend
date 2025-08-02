@@ -12,9 +12,9 @@ const ManageOrdersPage = () => {
 
   const [userIdFilter, setUserIdFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [orderIdSearch, setOrderIdSearch] = useState(''); // State for the direct ID search
+  const [orderIdSearch, setOrderIdSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const limit = 20;
+  const limit = 10;
 
   useEffect(() => {
     const params = {
