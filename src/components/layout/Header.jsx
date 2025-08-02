@@ -62,15 +62,15 @@
 // Older version of Header components
 
 // src/components/layout/Header.jsx
-import React from 'react';
-import { Link } from 'react-router-dom';
+import { LogOut, Menu, Search, ShoppingCart, User } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 import { logout } from '../../features/auth/authSlice';
-import { ShoppingCart, User, Search, Menu, LogOut } from 'lucide-react';
 
 const Header = () => {
   const dispatch = useDispatch();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const isAdmin = user?.role === 'Admin';
 
   const handleLogout = () => {
     dispatch(logout());
@@ -93,7 +93,7 @@ const Header = () => {
           🌸 LazaHoa
         </Link>
       </div>
-      
+
       <div className="navbar-center hidden lg:flex">
         <ul className="menu menu-horizontal px-1">
           <li><Link to="/products">Products</Link></li>
@@ -101,7 +101,7 @@ const Header = () => {
           <li><Link to="/about">About</Link></li>
         </ul>
       </div>
-      
+
       <div className="navbar-end gap-2">
         <div className="form-control">
           <input type="text" placeholder="Search flowers..." className="input input-bordered w-24 md:w-auto" />
@@ -115,7 +115,7 @@ const Header = () => {
             <span className="badge badge-sm indicator-item">3</span>
           </div>
         </Link>
-        
+
         {isAuthenticated ? (
           <div className="dropdown dropdown-end">
             <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
@@ -129,8 +129,9 @@ const Header = () => {
               <li className="menu-title">
                 <span>{user?.full_name || user?.email}</span>
               </li>
-              <li><Link to="/profile">Profile</Link></li>
-              <li><Link to="/orders">My Orders</Link></li>
+              {isAdmin && <li><Link to="/admin/dashboard">Admin Dashboard</Link></li>}
+              {!isAdmin && <li><Link to="/profile">Profile</Link></li>}
+              {!isAdmin && <li><Link to="/orders">My Orders</Link></li>}
               <li><button onClick={handleLogout} className="flex items-center gap-2">
                 <LogOut className="w-4 h-4" />
                 Logout

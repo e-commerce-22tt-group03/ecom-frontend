@@ -1,4 +1,10 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import {
+    addProduct as addProductApi,
+    deleteProduct as deleteProductApi,
+    fetchProducts as fetchProductsApi,
+    updateProduct as updateProductApi
+} from '../../api/productApi'; // Admin CMS API calls
 
 // API Base URL - temporarily
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/v1';
@@ -6,9 +12,58 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001
 // keyword suggestions limit
 const SUGGESTIONS_LIMIT = 5;
 
-// Fetch products with all filtering/sorting options
+// Admin CMS API calls
 export const fetchProducts = createAsyncThunk(
     'products/fetchProducts',
+    async (params, { rejectWithValue }) => {
+        try {
+            const data = await fetchProductsApi(params);
+            return data;
+        } catch (error) {
+            return rejectWithValue(error.toString());
+        }
+    }
+);
+
+export const addProduct = createAsyncThunk(
+    'products/addProduct',
+    async (productData, { rejectWithValue }) => {
+        try {
+            const data = await addProductApi(productData);
+            return data;
+        } catch (error) {
+            return rejectWithValue(error);
+        }
+    }
+);
+
+export const updateProduct = createAsyncThunk(
+    'products/updateProduct',
+    async ({ productId, productData }, { rejectWithValue }) => {
+        try {
+            const data = await updateProductApi(productId, productData);
+            return data;
+        } catch (error) {
+            return rejectWithValue(error);
+        }
+    }
+);
+
+export const deleteProduct = createAsyncThunk(
+    'products/deleteProduct',
+    async (productId, { rejectWithValue }) => {
+        try {
+            await deleteProductApi(productId);
+            return productId;
+        } catch (error) {
+            return rejectWithValue(error);
+        }
+    }
+);
+
+// Fetch products with all filtering/sorting options
+export const fetchProductsForListing = createAsyncThunk(
+    'products/fetchProductsForListing',
     async (params = {}, { rejectWithValue }) => {
         try {
             const {
@@ -145,11 +200,21 @@ export const fetchSuggestions = createAsyncThunk(
     }
 );
 
+
 const productsSlice = createSlice({
     name: 'products',
     initialState: {
+        // ADMIN CMS specific (NhanBin code)
+        pagination: {},
+        filters: {
+            category: '',
+            priceRange: [0, 1000],
+            SearchTerm: '',
+        },
+
         // Product listing
         items: [],
+
         totalProducts: 0,
         currentPage: 1,
         totalPages: 1,
@@ -184,8 +249,8 @@ const productsSlice = createSlice({
         viewMode: 'grid',
         showFilters: false,
         
-        // Filters
-        filters: {
+        // (Thinh code) Filters for product listing
+        publicFilters: {
             q: '',                                  // Search term
             minPrice: null,                         // Minimum price
             maxPrice: null,                         // Maximum price
@@ -200,35 +265,55 @@ const productsSlice = createSlice({
         }
     },
     reducers: {
-        // Filter actions
+        // ===== ADMIN CMS FUNCTIONS (NhanBin code) =====
         setSearchTerm: (state, action) => {
-            state.filters.q = action.payload;
-            state.filters.page = 1; // Reset to first page when searching
-        },
-        setPriceRange: (state, action) => {
-            const [minPrice, maxPrice] = action.payload;
-            state.filters.minPrice = minPrice;
-            state.filters.maxPrice = maxPrice;
-            state.filters.page = 1;
-        },
-        setConditionFilter: (state, action) => {
-            state.filters.condition = action.payload;
-            state.filters.page = 1;
+        state.filters.searchTerm = action.payload;
         },
         setCategoryFilter: (state, action) => {
-            state.filters.categoryIds = action.payload;
-            state.filters.page = 1;
+            state.filters.category = action.payload;
+        },
+        setPriceRange: (state, action) => {
+            state.filters.priceRange = action.payload;
+        },
+        clearFilters: (state) => {
+            state.filters = {
+                category: '',
+                priceRange: [0, 1000],
+                searchTerm: ''
+            };
+        },
+
+        // ===== PRODUCT LISTING FUNCTIONS (Thinh code) =====
+
+        // Filter actions
+        setPublicSearchTerm: (state, action) => {
+            state.publicFilters.q = action.payload;
+            state.publicFilters.page = 1; // Reset to first page when searching
+        },
+        setPublicPriceRange: (state, action) => {
+            const [minPrice, maxPrice] = action.payload;
+            state.publicFilters.minPrice = minPrice;
+            state.publicFilters.maxPrice = maxPrice;
+            state.publicFilters.page = 1;
+        },
+        setConditionFilter: (state, action) => {
+            state.publicFilters.condition = action.payload;
+            state.publicFilters.page = 1;
+        },
+        setPublicCategoryFilter: (state, action) => {
+            state.publicFilters.categoryIds = action.payload;
+            state.publicFilters.page = 1;
         },
         setSortBy: (state, action) => {
-            state.filters.sortBy = action.payload;
-            state.filters.page = 1;
+            state.publicFilters.sortBy = action.payload;
+            state.publicFilters.page = 1;
         },
         setPage: (state, action) => {
-            state.filters.page = action.payload;
+            state.publicFilters.page = action.payload;
         },
         setLimit: (state, action) => {
-            state.filters.limit = action.payload;
-            state.filters.page = 1;
+            state.publicFilters.limit = action.payload;
+            state.publicFilters.page = 1;
         },
         
         // UI actions
@@ -240,8 +325,8 @@ const productsSlice = createSlice({
         },
         
         // Clear actions
-        clearFilters: (state) => {
-            state.filters = {
+        clearPublicFilters: (state) => {
+            state.publicFilters = {
                 q: '',
                 minPrice: null,
                 maxPrice: null,
@@ -268,12 +353,61 @@ const productsSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            // Fetch products
+            // ===== ADMIN CMS FUNCTIONS (NhanBin code) =====
             .addCase(fetchProducts.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
             .addCase(fetchProducts.fulfilled, (state, action) => {
+                state.loading = false;
+                state.items = action.payload.products;
+                state.pagination = action.payload.pagination;
+            })
+            .addCase(fetchProducts.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            // Add Product
+            .addCase(addProduct.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(addProduct.fulfilled, (state) => {
+                state.loading = false;
+            })
+            .addCase(addProduct.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            // Update Product
+            .addCase(updateProduct.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(updateProduct.fulfilled, (state) => {
+                state.loading = false;
+            })
+            .addCase(updateProduct.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            // Delete Product
+            .addCase(deleteProduct.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(deleteProduct.fulfilled, (state) => {
+                state.loading = false;
+            })
+            .addCase(deleteProduct.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+
+            // ===== PRODUCT LISTING FUNCTIONS =====
+            .addCase(fetchProductsForListing.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchProductsForListing.fulfilled, (state, action) => {
                 state.loading = false;
                 state.items = action.payload.products;
                 
@@ -285,11 +419,10 @@ const productsSlice = createSlice({
                 state.hasNextPage = pagination.currentPage < pagination.totalPages;
                 state.hasPreviousPage = pagination.currentPage > 1;
             })
-            .addCase(fetchProducts.rejected, (state, action) => {
+            .addCase(fetchProductsForListing.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             })
-            
             // Fetch product by ID
             .addCase(fetchProductById.pending, (state) => {
                 state.productLoading = true;
@@ -356,17 +489,26 @@ export const selectPagination = (state) => ({
     hasPreviousPage: state.products.hasPreviousPage
 });
 
+export const selectPublicFilters = (state) => state.products.publicFilters;
+
 export const { 
+    // ADMIN CMS specific (NhanBin code)
     setSearchTerm, 
-    setPriceRange, 
-    setConditionFilter,
     setCategoryFilter, 
+    setPriceRange, 
+    clearFilters,
+
+    // Product listing (Thinh code)
+    setPublicSearchTerm, 
+    setPublicPriceRange, 
+    setConditionFilter,
+    setPublicCategoryFilter, 
     setSortBy,
     setPage,
     setLimit,
     setViewMode,
     setShowFilters,
-    clearFilters,
+    clearPublicFilters,
     clearSuggestions,
     clearError,
     clearProductError,

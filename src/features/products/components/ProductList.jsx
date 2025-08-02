@@ -12,20 +12,20 @@ import { debounce} from 'lodash';
 
 import ProductCard from './ProductCard';
 import {
-    fetchProducts,
+    fetchProductsForListing,
     fetchCategories,
     fetchSuggestions,
     // fetchProductById,
-    setSearchTerm,
-    setPriceRange,
+    setPublicSearchTerm,
+    setPublicPriceRange,
     setConditionFilter,
-    setCategoryFilter,
+    setPublicCategoryFilter,
     setSortBy,
     setPage,
     // setLimit,
     setViewMode,
     setShowFilters,
-    clearFilters,
+    clearPublicFilters,
     clearSuggestions,
     selectAllProducts,
     selectProductsLoading,
@@ -34,7 +34,7 @@ import {
     selectCategoriesLoading,
     selectSuggestions,
     selectSuggestionsLoading,
-    selectFilters,
+    selectPublicFilters,
     selectPagination,
     selectViewMode,
     selectShowFilters,
@@ -54,7 +54,7 @@ const ProductList = () => {
     const categoriesLoading = useSelector(selectCategoriesLoading);
     const suggestions = useSelector(selectSuggestions);
     const suggestionsLoading = useSelector(selectSuggestionsLoading);
-    const filters = useSelector(selectFilters);
+    const filters = useSelector(selectPublicFilters);
     const pagination = useSelector(selectPagination);
     const viewMode = useSelector(selectViewMode);
     const showFilters = useSelector(selectShowFilters);
@@ -72,7 +72,7 @@ const ProductList = () => {
     // Debounced search input handler
     const debouncedSearch = useCallback(
         debounce((searchTerm) => {
-            dispatch(setSearchTerm(searchTerm));
+            dispatch(setPublicSearchTerm(searchTerm));
             if (searchTerm.trim().length >= 2) {
                 dispatch(fetchSuggestions({ prefix: searchTerm }));
                 setShowSuggestions(true);
@@ -88,7 +88,7 @@ const ProductList = () => {
     // Debounced price range filter handler
     const debouncedPriceChange = useCallback(
         debounce((range) => {
-            dispatch(setPriceRange(range));
+            dispatch(setPublicPriceRange(range));
         }, 500),
         [dispatch]
     );
@@ -100,7 +100,7 @@ const ProductList = () => {
     }, [dispatch]);
 
     useEffect(() => {
-        dispatch(fetchProducts(filters));
+        dispatch(fetchProductsForListing(filters));
     }, [dispatch, filters]);
 
     useEffect(() => {
@@ -120,7 +120,7 @@ const ProductList = () => {
 
     const handleSuggestionClick = (suggestion) => {
         setSearchInput(suggestion);
-        dispatch(setSearchTerm(suggestion));
+        dispatch(setPublicSearchTerm(suggestion));
         setShowSuggestions(false);
         dispatch(clearSuggestions());
     };
@@ -141,7 +141,7 @@ const ProductList = () => {
     };
 
     const handleClearFilters = () => {
-        dispatch(clearFilters());
+        dispatch(clearPublicFilters());
         setSearchInput('');
         setPriceRangeLocal([MINPRICE, MAXPRICE]);
         setShowSuggestions(false);
@@ -355,10 +355,10 @@ const ProductList = () => {
 
                                                                             if (e.target.checked) {
                                                                                 const newIds = [...currentIds, categoryId];
-                                                                                dispatch(setCategoryFilter(newIds.join(',')));
+                                                                                dispatch(setPublicCategoryFilter(newIds.join(',')));
                                                                             } else {
                                                                                 const newIds = currentIds.filter(id => id !== categoryId);
-                                                                                dispatch(setCategoryFilter(newIds.join(',')));
+                                                                                dispatch(setPublicCategoryFilter(newIds.join(',')));
                                                                             }
                                                                         }}
                                                                     />
@@ -384,10 +384,10 @@ const ProductList = () => {
 
                                                                             if (e.target.checked) {
                                                                                 const newIds = [...currentIds, categoryId];
-                                                                                dispatch(setCategoryFilter(newIds.join(',')));
+                                                                                dispatch(setPublicCategoryFilter(newIds.join(',')));
                                                                             } else {
                                                                                 const newIds = currentIds.filter(id => id !== categoryId);
-                                                                                dispatch(setCategoryFilter(newIds.join(',')));
+                                                                                dispatch(setPublicCategoryFilter(newIds.join(',')));
                                                                             }
                                                                         }}
                                                                     />
@@ -425,9 +425,8 @@ const ProductList = () => {
                         <div className="badge badge-primary gap-2">
                             Search: "{filters.q}"
                             <X className="h-3 w-3 cursor-pointer" onClick={() => {
-                                // dispatch(setSearchTerm(''));
                                 setSearchInput('');
-                                dispatch(setSearchTerm(''));
+                                dispatch(setPublicSearchTerm(''));
                             }} />
                         </div>
                     )}
@@ -441,7 +440,7 @@ const ProductList = () => {
                         <div className="badge badge-accent gap-2">
                             ${filters.minPrice || MINPRICE} - ${filters.maxPrice || MAXPRICE}
                             <X className="h-3 w-3 cursor-pointer" onClick={() => {
-                                dispatch(setPriceRange([null, null]));
+                                dispatch(setPublicPriceRange([null, null]));
                                 setPriceRangeLocal([0, 200]);
                             }} />
                         </div>
