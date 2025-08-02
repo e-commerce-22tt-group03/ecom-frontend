@@ -39,7 +39,7 @@ const ManageProductsPage = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6 ml-4">
         <h1 className="text-3xl font-bold">Manage Products</h1>
         <Link to="/admin/products/add" className="btn btn-primary">
           Add New Product

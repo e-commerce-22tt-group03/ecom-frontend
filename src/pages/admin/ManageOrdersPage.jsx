@@ -12,9 +12,9 @@ const ManageOrdersPage = () => {
 
   const [userIdFilter, setUserIdFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [orderIdSearch, setOrderIdSearch] = useState(''); // State for the direct ID search
+  const [orderIdSearch, setOrderIdSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const limit = 20;
+  const limit = 10;
 
   useEffect(() => {
     const params = {
@@ -52,7 +52,7 @@ const ManageOrdersPage = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Manage Orders</h1>
+      <h1 className="text-3xl font-bold mb-6 ml-4">Manage Orders</h1>
 
       {/* Filter and Search Controls */}
       <div className="card bg-base-100 shadow-lg p-4 mb-6 space-y-4">

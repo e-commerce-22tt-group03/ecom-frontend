@@ -47,7 +47,7 @@ export const deleteProduct = createAsyncThunk(
     async (productId, { rejectWithValue }) => {
         try {
             await deleteProductApi(productId);
-            return productId; // Return the ID on success
+            return productId;
         } catch (error) {
             return rejectWithValue(error);
         }
