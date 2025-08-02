@@ -49,8 +49,10 @@ const ManageUsersPage = () => {
       <h1 className="text-3xl font-bold mb-6">Manage Users</h1>
 
       <div className="card bg-base-100 shadow-lg p-4 mb-6">
-        <div className="form-control w-full sm:w-auto">
-          <label className="label"><span className="label-text">Filter by Role</span></label>
+        <label className="form-control w-full sm:w-auto">
+          <div className="label mr-4">
+            <span className="label-text">Filter by Role</span>
+          </div>
           <select
             className="select select-bordered"
             value={roleFilter}
@@ -60,7 +62,7 @@ const ManageUsersPage = () => {
             <option>Admin</option>
             <option>Registered Buyer</option>
           </select>
-        </div>
+        </label>
       </div>
 
       {loading && <div className="text-center p-4"><span className="loading loading-lg loading-spinner"></span></div>}

@@ -21,7 +21,9 @@ const AdminUsersTable = ({ users, onEditRole, onDelete }) => {
               <td>{user.full_name}</td>
               <td>{user.email}</td>
               <td>
-                <span className={`badge ${user.role === 'Admin' ? 'badge-secondary' : 'badge-ghost'}`}>
+                <span className={`badge ${user.role === 'Admin' ? 'badge-secondary' :
+                  user.role === 'Registered Buyer' ? 'badge-primary' : 'badge-ghost'
+                  }`}>
                   {user.role}
                 </span>
               </td>
