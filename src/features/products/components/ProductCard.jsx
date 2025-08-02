@@ -1,10 +1,24 @@
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Heart, Star, Eye } from 'lucide-react';
 import { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import {
+    addToCart,
+    fetchCart,
+    selectAddingToCart,
+    selectIsAuthenticated
+} from '../../cart/cartSlice';
+import { useNavigate } from 'react-router-dom';
 
 const ProductCard = ({ product, viewMode = 'grid' }) => {
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
     const [isWishlisted, setIsWishlisted] = useState(false);
     
+    // Cart state
+    const addingToCart = useSelector(selectAddingToCart);
+    const isAuthenticated = useSelector(selectIsAuthenticated);
+
     // Map backend data structure to component
     const {
         productId: id,
@@ -28,11 +42,39 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
     const isNew = condition === 'New Flower';
     const isBestSelling = totalSold > 10; // May adjust this threshold
 
-    const handleAddToCart = (e) => {
+    const handleAddToCart = async (e) => {
         e.preventDefault();
         e.stopPropagation();
-        // TODO: Dispatch add to cart action when cart management is ready
-        console.log(`Adding ${name} to cart`);
+
+        if (!isAuthenticated) {
+            navigate('/login', {
+                state: {
+                    from: location.pathname,
+                    message: 'Please log in to add items to your cart'
+                }
+            });
+            return;
+        }
+
+        if (!isInStock) {
+            return;
+        }
+
+        try {
+            await dispatch(addToCart({
+                product_id: id,
+                quantity: 1
+            })).unwrap();
+
+            // Refresh cart to get updated data
+            dispatch(fetchCart());
+
+            // Show success message (may add toast notification here)
+            console.log(`Added ${name} to cart successfully!`);
+        } catch (error) {
+            console.error('Failed to add to cart:', error);
+            // May add error toast notification here
+        }
     };
 
     const handleWishlistToggle = (e) => {
@@ -142,9 +184,14 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
                             <button 
                                 onClick={handleAddToCart}
                                 className="btn btn-primary"
-                                disabled={!isInStock}
+                                disabled={!isInStock || addingToCart}
                             >
-                                <ShoppingCart className="mr-2 h-4 w-4" />
+                                {addingToCart ? (
+                                    <span className="loading loading-spinner loading-sm mr-2"></span>
+
+                                ) : (
+                                    <ShoppingCart className="mr-2 h-4 w-4" />
+                                )}
                                 Add to Cart
                             </button>
                         </div>
@@ -271,9 +318,13 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
                     <button 
                         onClick={handleAddToCart}
                         className="btn btn-primary btn-sm"
-                        disabled={!isInStock}
+                        disabled={!isInStock || addingToCart}
                     >
-                        <ShoppingCart className="h-4 w-4" />
+                        {addingToCart ? (
+                            <span className="loading loading-spinner loading-xs"></span>
+                        ) : (
+                            <ShoppingCart className="h-4 w-4" />
+                        )}
                     </button>
                 </div>
             </div>

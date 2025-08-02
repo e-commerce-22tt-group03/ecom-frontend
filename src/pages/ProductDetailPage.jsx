@@ -21,6 +21,12 @@ import{
     selectProductLoading,
     selectProductError
 } from '../features/products/productsSlice';
+import {
+    addToCart,
+    fetchCart,
+    selectAddingToCart,
+    selectIsAuthenticated
+} from '../features/cart/cartSlice';
 
 const ProductDetailPage = () => {
     const { id } = useParams();
@@ -32,6 +38,10 @@ const ProductDetailPage = () => {
     const loading = useSelector(selectProductLoading);
     const error = useSelector(selectProductError);
     
+    // Cart state
+    const addingToCart = useSelector(selectAddingToCart);
+    const isAuthenticated = useSelector(selectIsAuthenticated);
+
     // State for product interactions
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
@@ -63,9 +73,39 @@ const ProductDetailPage = () => {
         }
     };
 
-    const handleAddToCart = () => {
-        // TODO: Dispatch add to cart action when cart management is ready
-        console.log(`Adding ${quantity}x ${product.name} to cart`);
+    const handleAddToCart = async () => {
+        if (!isAuthenticated) {
+            navigate('/login', {
+                state: {
+                    from: location.pathname,
+                    message: 'Please log in to add items to your cart'
+                }
+            });
+            return;
+        }
+
+        if (!product?.stockQuantity || quantity > product.stockQuantity) {
+            return;
+        }
+
+        try {
+            await dispatch(addToCart({ 
+                product_id: product.productId, 
+                quantity: quantity 
+            })).unwrap();
+            
+            // Refresh cart to get updated data
+            dispatch(fetchCart());
+
+            // Show success message (you can add toast notification here)
+            console.log(`Added ${quantity}x ${product.name} to cart successfully!`);
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // Optionally reset quantity to 1 after successful add
+            setQuantity(1);
+        } catch (error) {
+            console.error('Failed to add to cart:', error);
+            // You can add error toast notification here
+        }
     };
 
     const handleAddToWishlist = () => {
@@ -483,10 +523,14 @@ const ProductDetailPage = () => {
                         <div className="flex gap-3">
                             <button 
                                 onClick={handleAddToCart}
-                                disabled={!isInStock}
+                                disabled={!isInStock || addingToCart}
                                 className="btn btn-primary flex-1"
                             >
-                                <ShoppingCart className="mr-2 h-5 w-5" />
+                                {addingToCart ? (
+                                    <span className="loading loading-spinner loading-sm mr-2"></span>
+                                ) : (
+                                    <ShoppingCart className="mr-2 h-5 w-5" />
+                                )}
                                 Add to Cart - ${(dynamicPrice * quantity).toFixed(2)}
                             </button>
                             <button 

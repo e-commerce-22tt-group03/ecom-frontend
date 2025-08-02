@@ -16,6 +16,7 @@ import OrderDetailsPage from "../pages/admin/OrderDetailsPage";
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
 import ProductDetailPage from '../pages/ProductDetailPage';
+import CartPage from '../pages/CartPage';
 
 const AppRoutes = () => {
     return (
@@ -27,11 +28,14 @@ const AppRoutes = () => {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/about" element={<h2>About Page</h2>} />
             <Route path="/contact" element={<h2>Contact Page</h2>} />
+            
             {/* Product Detail Route */}
             <Route path="/products/:id" element={<ProductDetailPage />} />
+            
+            {/* Cart Route */}
+            <Route path="/cart" element={<CartPage />} />
 
             {/* Future routes - will be implemented later */}
-            {/* <Route path="/cart" element={<CartPage />} /> */}
             {/* <Route path="/checkout" element={<CheckoutPage />} /> */}
             {/* <Route path="/profile" element={<ProfilePage />} /> */}
             {/* <Route path="/orders" element={<OrdersPage />} /> */}
