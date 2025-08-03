@@ -16,6 +16,8 @@ import OrderDetailsPage from "../pages/admin/OrderDetailsPage";
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
 import ProductDetailPage from '../pages/ProductDetailPage';
+import OrderPage from "../pages/OrderPage";
+import ProfilePage from "../pages/ProfilePage";
 
 const AppRoutes = () => {
     return (
@@ -25,15 +27,16 @@ const AppRoutes = () => {
             <Route path="/products" element={<ProductList />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/orders" element={<OrderPage />} />
             <Route path="/about" element={<h2>About Page</h2>} />
             <Route path="/contact" element={<h2>Contact Page</h2>} />
+            <Route path="/profile" element={<ProfilePage />} />
             {/* Product Detail Route */}
             <Route path="/products/:id" element={<ProductDetailPage />} />
 
             {/* Future routes - will be implemented later */}
             {/* <Route path="/cart" element={<CartPage />} /> */}
             {/* <Route path="/checkout" element={<CheckoutPage />} /> */}
-            {/* <Route path="/profile" element={<ProfilePage />} /> */}
             {/* <Route path="/orders" element={<OrdersPage />} /> */}
 
             {/* Admin Routes */}
