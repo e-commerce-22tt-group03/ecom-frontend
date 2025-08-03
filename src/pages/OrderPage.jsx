@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchOrders, fetchOrderItems } from '../features/orders/orderSlice';
+import { fetchOrders, fetchOrderItems, clearOrderError } from '../features/orders/ordersSlice';
 import ProfileSidebar from '../features/profile/ProfileSidebar';
 
 const OrderPage = () => {
@@ -8,7 +8,6 @@ const OrderPage = () => {
   const { orders, orderItems, loading, error, itemsLoading } = useSelector(state => state.orders);
   const { token, user } = useSelector(state => state.auth);
   const [expandedOrder, setExpandedOrder] = useState(null);
-  const [mockOrderItems, setMockOrderItems] = useState({}); // Store mock data locally
 
   // Debug logging
   console.log('OrderPage - Auth state:', { token: !!token, user: !!user });
@@ -34,45 +33,11 @@ const OrderPage = () => {
     } else {
       setExpandedOrder(orderId);
       // Fetch order items if not already loaded
-      if (!orderItems[orderId] && !mockOrderItems[orderId]) {
-        console.log('Using mock data for order:', orderId);
-        // Comment out API fetch and use mock data instead
-        // dispatch(fetchOrderItems(orderId));
-        
-        // Mock data for order items
-        const mockItems = [
-          {
-            order_item_id: 1,
-            product_id: 101,
-            product_name: "Red Rose Bouquet",
-            quantity: 2,
-            price_at_purchase: 25.99
-          },
-          {
-            order_item_id: 2,
-            product_id: 102,
-            product_name: "White Lily Arrangement",
-            quantity: 1,
-            price_at_purchase: 45.00
-          },
-          {
-            order_item_id: 3,
-            product_id: 103,
-            product_name: "Sunflower Bundle",
-            quantity: 3,
-            price_at_purchase: 18.50
-          }
-        ];
-        
-        // Set mock data locally
-        setMockOrderItems(prev => ({
-          ...prev,
-          [orderId]: mockItems
-        }));
-        
-        console.log('Mock order items set for order:', orderId, mockItems);
+      if (!orderItems[orderId]) {
+        console.log('Fetching order items for order:', orderId);
+        dispatch(fetchOrderItems(orderId));
       } else {
-        console.log('Order items already loaded:', orderItems[orderId] || mockOrderItems[orderId]);
+        console.log('Order items already loaded:', orderItems[orderId]);
       }
     }
   };
@@ -202,33 +167,26 @@ const OrderPage = () => {
                       <div className="mt-4 pt-4 border-t border-base-300">
                         <h4 className="font-semibold mb-3">Order Items</h4>
                         
-                        {/* Debug info
-                        <div className="text-xs text-base-content/50 mb-2">
-                          Debug: Loading={itemsLoading[order.order_id]}, 
-                          API Items={orderItems[order.order_id] ? orderItems[order.order_id].length : 'none'},
-                          Mock Items={mockOrderItems[order.order_id] ? mockOrderItems[order.order_id].length : 'none'}
-                        </div> */}
-                        
                         {itemsLoading[order.order_id] && (
                           <div className="flex justify-center py-4">
                             <span className="loading loading-spinner loading-md"></span>
                           </div>
                         )}
 
-                        {(orderItems[order.order_id] || mockOrderItems[order.order_id]) && (
+                        {orderItems[order.order_id] && (
                           <div className="space-y-2">
-                            {(orderItems[order.order_id] || mockOrderItems[order.order_id]).map((item, index) => (
+                            {orderItems[order.order_id].map((item, index) => (
                               <div key={index} className="flex justify-between items-center py-2 px-3 bg-base-200 rounded">
                                 <div className="flex items-center gap-3">
                                   <div>
-                                    <p className="font-medium">{item.product_name || `Product #${item.product_id}`}</p>
+                                    <p className="font-medium">{item.product_name || item.name || `Product #${item.product_id}`}</p>
                                     <p className="text-sm text-base-content/70">Quantity: {item.quantity}</p>
                                   </div>
                                 </div>
                                 <div className="text-right">
                                   <p className="font-semibold">${item.price_at_purchase}</p>
                                   <p className="text-sm text-base-content/70">
-                                    ${(item.price_at_purchase * item.quantity).toFixed(2)} total
+                                     Total: ${(item.price_at_purchase * item.quantity).toFixed(2)}
                                   </p>
                                 </div>
                               </div>
@@ -236,9 +194,9 @@ const OrderPage = () => {
                           </div>
                         )}
 
-                        {!itemsLoading[order.order_id] && !orderItems[order.order_id] && !mockOrderItems[order.order_id] && (
+                        {!itemsLoading[order.order_id] && !orderItems[order.order_id] && (
                           <div className="alert alert-info">
-                            <span>No order items available</span>
+                            <span>Failed to load order items</span>
                           </div>
                         )}
                       </div>
