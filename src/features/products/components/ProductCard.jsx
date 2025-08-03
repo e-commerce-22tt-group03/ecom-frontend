@@ -1,51 +1,280 @@
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Heart } from 'lucide-react';
+import { ShoppingCart, Heart, Star, Eye } from 'lucide-react';
+import { useState } from 'react';
 
-const ProductCard = ({ product }) => {
-    // Placeholder data structure - will be replaced with real data from props
+const ProductCard = ({ product, viewMode = 'grid' }) => {
+    const [isWishlisted, setIsWishlisted] = useState(false);
+    
+    // Map backend data structure to component
     const {
-        id = 1,
+        productId: id,
         name = "Sample Flower",
-        price = 29.99,
-        image = "/placeholder-flower.jpg",
-        category = "Bouquet",
-        isInStock = true
+        dynamicPrice: price = 29.99,
+        basePrice: originalPrice = null,
+        imageUrl: image = "/placeholder-flower.jpg",
+        condition = "New Flower",
+        stockQuantity = 0,
+        averageRating = 0,
+        totalSold = 0
     } = product || {};
 
+    // Calculate discount if there's a price difference
+    const discount = originalPrice && originalPrice > price 
+        ? Math.round(((originalPrice - price) / originalPrice) * 100)
+        : 0;
+
+    const isInStock = stockQuantity > 0;
+    const isLowStock = stockQuantity <= 5 && stockQuantity > 0;
+    const isNew = condition === 'New Flower';
+    const isBestSelling = totalSold > 10; // May adjust this threshold
+
+    const handleAddToCart = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // TODO: Dispatch add to cart action when cart management is ready
+        console.log(`Adding ${name} to cart`);
+    };
+
+    const handleWishlistToggle = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsWishlisted(!isWishlisted);
+        // TODO: Dispatch wishlist action
+    };
+
+    const renderStars = (rating) => {
+        return [...Array(5)].map((_, i) => (
+            <Star 
+                key={i} 
+                className={`h-3 w-3 ${
+                    i < Math.floor(rating) 
+                        ? 'text-yellow-400 fill-current' 
+                        : 'text-gray-300'
+                }`} 
+            />
+        ));
+    };
+
+    if (viewMode === 'list') {
+        return (
+            <div className="card lg:card-side bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300">
+                <figure className="lg:w-48">
+                    <img 
+                        src={image} 
+                        alt={name}
+                        className="w-full h-48 lg:h-full object-cover"
+                        onError={(e) => {
+                            e.target.src = "/placeholder-flower.jpg";
+                        }}
+                    />
+                </figure>
+                <div className="card-body flex-1">
+                    <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className={`badge badge-sm ${
+                                    condition === 'New Flower' ? 'badge-success' :
+                                    condition === 'Low Stock' ? 'badge-warning' :
+                                    'badge-neutral'
+                                }`}>
+                                    {condition}
+                                </span>
+                                {isBestSelling && (
+                                    <span className="badge badge-primary badge-sm">
+                                        Best Seller
+                                    </span>
+                                )}
+                                {isLowStock && (
+                                    <span className="badge badge-warning badge-sm">
+                                        Only {stockQuantity} left!
+                                    </span>
+                                )}
+                            </div>
+                            <h2 className="card-title text-xl">{name}</h2>
+                            
+                            {/* Rating and Sales */}
+                            <div className="flex items-center gap-4 mt-2">
+                                {averageRating > 0 && (
+                                    <div className="flex items-center gap-1">
+                                        <div className="flex items-center">
+                                            {renderStars(averageRating)}
+                                        </div>
+                                        <span className="text-sm text-base-content/70">
+                                            {averageRating.toFixed(1)}
+                                        </span>
+                                    </div>
+                                )}
+                                {totalSold > 0 && (
+                                    <span className="text-sm text-base-content/70">
+                                        {totalSold} sold
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                        
+                        <div className="text-right">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="text-2xl font-bold text-primary">${price}</span>
+                                {originalPrice && originalPrice > price && (
+                                    <span className="text-sm text-base-content/50 line-through">
+                                        ${originalPrice}
+                                    </span>
+                                )}
+                            </div>
+                            <span className={`badge ${isInStock ? 'badge-success' : 'badge-error'}`}>
+                                {isInStock ? `${stockQuantity} in stock` : 'Out of Stock'}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div className="card-actions justify-between mt-4">
+                        <Link to={`/products/${id}`} className="btn btn-outline">
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Details
+                        </Link>
+                        <div className="flex gap-2">
+                            <button 
+                                onClick={handleWishlistToggle}
+                                className={`btn btn-ghost btn-square ${isWishlisted ? 'text-error' : ''}`}
+                            >
+                                <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-current' : ''}`} />
+                            </button>
+                            <button 
+                                onClick={handleAddToCart}
+                                className="btn btn-primary"
+                                disabled={!isInStock}
+                            >
+                                <ShoppingCart className="mr-2 h-4 w-4" />
+                                Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300">
-            <figure className="px-4 pt-4">
+        <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 group">
+            <figure className="px-4 pt-4 relative overflow-hidden">
                 <img 
                     src={image} 
                     alt={name}
-                    className="rounded-xl h-48 w-full object-cover"
+                    className="rounded-xl h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    onError={(e) => {
+                        e.target.src = "/placeholder-flower.jpg";
+                    }}
                 />
+                
+                {/* Badges */}
+                <div className="absolute top-6 left-6 flex flex-col gap-1">
+                    {discount > 0 && (
+                        <span className="badge badge-error text-error-content">
+                            -{discount}%
+                        </span>
+                    )}
+                    {isNew && (
+                        <span className="badge badge-success">New</span>
+                    )}
+                    {isBestSelling && (
+                        <span className="badge badge-primary">Best Seller</span>
+                    )}
+                    {condition === 'Low Stock' && (
+                        <span className="badge badge-warning">Low Stock</span>
+                    )}
+                </div>
+
+                {/* Wishlist Button */}
+                <button 
+                    onClick={handleWishlistToggle}
+                    className={`absolute top-6 right-6 btn btn-circle btn-sm ${
+                        isWishlisted 
+                            ? 'btn-error text-error-content' 
+                            : 'btn-ghost bg-base-100/80 hover:bg-base-100'
+                    } opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+                >
+                    <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-current' : ''}`} />
+                </button>
+
+                {/* Quick View Button */}
+                <Link 
+                    to={`/products/${id}`}
+                    className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                >
+                    <span className="btn btn-primary btn-sm">
+                        <Eye className="mr-2 h-4 w-4" />
+                        Quick View
+                    </span>
+                </Link>
             </figure>
+            
             <div className="card-body">
-                <h2 className="card-title text-lg font-semibold">{name}</h2>
-                <p className="text-sm text-base-content/70">{category}</p>
+                {/* Condition Badge */}
+                <div className="flex items-center justify-between mb-2">
+                    <span className={`badge badge-sm ${
+                        condition === 'New Flower' ? 'badge-success' :
+                        condition === 'Low Stock' ? 'badge-warning' :
+                        'badge-neutral'
+                    }`}>
+                        {condition}
+                    </span>
+                    {isLowStock && (
+                        <span className="text-xs text-warning font-semibold">
+                            Only {stockQuantity} left!
+                        </span>
+                    )}
+                </div>
+
+                <h2 className="card-title text-lg font-semibold line-clamp-2">{name}</h2>
+
+                {/* Rating and Sales */}
+                <div className="flex items-center justify-between mt-1">
+                    {averageRating > 0 ? (
+                        <div className="flex items-center gap-1">
+                            <div className="flex items-center">
+                                {renderStars(averageRating)}
+                            </div>
+                            <span className="text-xs text-base-content/70">
+                                {averageRating.toFixed(1)}
+                            </span>
+                        </div>
+                    ) : (
+                        <span className="text-xs text-base-content/50">No ratings yet</span>
+                    )}
+                    
+                    {totalSold > 0 && (
+                        <span className="text-xs text-base-content/70">
+                            {totalSold} sold
+                        </span>
+                    )}
+                </div>
+
+                {/* Price */}
                 <div className="flex items-center justify-between mt-2">
-                    <span className="text-xl font-bold text-primary">${price}</span>
-                    <span className={`badge ${isInStock ? 'badge-success' : 'badge-error'}`}>
+                    <div className="flex items-center gap-2">
+                        <span className="text-xl font-bold text-primary">${price}</span>
+                        {originalPrice && originalPrice > price && (
+                            <span className="text-sm text-base-content/50 line-through">
+                                ${originalPrice}
+                            </span>
+                        )}
+                    </div>
+                    <span className={`badge ${isInStock ? 'badge-success' : 'badge-error'} badge-sm`}>
                         {isInStock ? 'In Stock' : 'Out of Stock'}
                     </span>
                 </div>
+
                 <div className="card-actions justify-between mt-4">
-                    <Link to={`/products/${id}`} className="btn btn-outline btn-sm">
+                    <Link to={`/products/${id}`} className="btn btn-outline btn-sm flex-1">
                         View Details
                     </Link>
-                    <div className="flex gap-2">
-                        <button className="btn btn-ghost btn-sm btn-square">
-                            <Heart className="h-4 w-4" />
-                        </button>
-                        <button 
-                            className="btn btn-primary btn-sm"
-                            disabled={!isInStock}
-                        >
-                            <ShoppingCart className="h-4 w-4" />
-                            Add to Cart
-                        </button>
-                    </div>
+                    <button 
+                        onClick={handleAddToCart}
+                        className="btn btn-primary btn-sm"
+                        disabled={!isInStock}
+                    >
+                        <ShoppingCart className="h-4 w-4" />
+                    </button>
                 </div>
             </div>
         </div>
