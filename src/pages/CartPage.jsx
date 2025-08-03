@@ -52,17 +52,24 @@ const CartPage = () => {
     
     // Local state
     const [showClearConfirm, setShowClearConfirm] = useState(false);
+    const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+
+
 
     // Fetch cart on component mount
     useEffect(() => {
         if (isAuthenticated) {
             // Fetch cart with product details
-            dispatch(fetchCartWithProductDetails());
+            dispatch(fetchCartWithProductDetails())
+                .finally(() => {
+                    setInitialLoadComplete(true); // After dispatch success
+                })
             // dispatch(fetchCart());
         } else {
             // Maybe not need later, but for now:
             // Reset Cart state if not authenticated
             dispatch(resetCart());
+            setInitialLoadComplete(true);
         }
         
         // Clear any previous errors
@@ -78,7 +85,10 @@ const CartPage = () => {
         try {
             await dispatch(updateCartItemQuantity({ itemId, quantity: newQuantity })).unwrap();
             // Refresh cart to get updated totals
-            dispatch(fetchCart());
+            // dispatch(fetchCart());
+
+            // Temporary version to fetch cart with product details
+            dispatch(fetchCartWithProductDetails());
         } catch (error) {
             console.error('Failed to update quantity:', error);
         }
@@ -88,7 +98,10 @@ const CartPage = () => {
         try {
             await dispatch(removeFromCart(itemId)).unwrap();
             // Refresh cart to get updated totals
-            dispatch(fetchCart());
+            // dispatch(fetchCart());
+
+            // Temporary version to fetch cart with product details
+            dispatch(fetchCartWithProductDetails());
         } catch (error) {
             console.error('Failed to remove item:', error);
         }
@@ -151,11 +164,20 @@ const CartPage = () => {
         );
     }
 
-    if (loading && items.length === 0) {
+    if ((loading && !initialLoadComplete) || (loading && items.length === 0)) {
         return (
+            // <div className="container mx-auto px-4 py-8">
+            //     <div className="flex justify-center items-center min-h-96">
+            //         <span className="loading loading-spinner loading-lg"></span>
+            //     </div>
+            // </div>
+
+            // temporary quick fix
             <div className="container mx-auto px-4 py-8">
-                <div className="flex justify-center items-center min-h-96">
-                    <span className="loading loading-spinner loading-lg"></span>
+                <div className="flex flex-col items-center justify-center min-h-96">
+                    <span className="loading loading-spinner loading-lg mb-4"></span>
+                    <p className="text-lg font-medium">Loading your cart...</p>
+                    <p className="text-sm text-base-content/70">Please wait while we fetch your items</p>
                 </div>
             </div>
         );
@@ -163,8 +185,8 @@ const CartPage = () => {
 
     return (
         <div className="container mx-auto px-4 py-8">
-            {/* Header Section - Admin CMS Style */}
-            <div className="mb-8">
+            {/* Header Section */}
+            {/* <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-4">
                         <Link to="/products" className="btn btn-ghost btn-sm">
@@ -208,6 +230,73 @@ const CartPage = () => {
                     <div className="divider divider-horizontal"></div>
                     <span>Total: ${cartTotal.toFixed(2)}</span>
                 </div>
+            </div> */}  {/* The above header section is having a really bad design */}
+
+            <div className="mb-8">
+                {/* Breadcrumb */}
+                <div className="breadcrumbs text-sm mb-6">
+                    <ul>
+                        <li><Link to="/" className="hover:text-primary">Home</Link></li>
+                        <li><Link to="/products" className="hover:text-primary">Products</Link></li>
+                        <li><span className="text-base-content/70">Cart</span></li>
+                    </ul>
+                </div>
+
+                {/* Main Header */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-6">
+                    <div className="flex-1">
+                        <h1 className="text-3xl lg:text-4xl font-bold text-base-content mb-2">
+                            Your Shopping Cart
+                        </h1>
+                        <p className="text-base-content/70 text-lg">
+                            Review your items and proceed to checkout
+                        </p>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={handleRefresh}
+                            className="btn btn-ghost btn-sm gap-2"
+                            disabled={loading}
+                        >
+                            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                            Refresh
+                        </button>
+                        
+                        {items.length > 0 && (
+                            <button
+                                onClick={() => setShowClearConfirm(true)}
+                                className="btn btn-error btn-outline btn-sm gap-2"
+                                disabled={clearingCart}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                                Clear All
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Cart Summary Bar */}
+                <div className="bg-base-200 rounded-lg p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-primary"></div>
+                                <span className="font-semibold">
+                                    {items.length} {items.length === 1 ? 'Item' : 'Items'}
+                                </span>
+                            </div>
+                            <div className="text-base-content/70">
+                                Subtotal: <span className="font-semibold text-primary">${cartTotal.toFixed(2)}</span>
+                            </div>
+                        </div>
+                        
+                        <Link to="/products" className="btn btn-outline btn-sm gap-2">
+                            <ArrowLeft className="h-4 w-4" />
+                            Continue Shopping
+                        </Link>
+                    </div>
+                </div>
             </div>
 
             {/* Error Alert */}
@@ -249,6 +338,10 @@ const CartPage = () => {
                             <div className="card-header">
                                 <div className="card-title p-6 pb-0">
                                     <h2 className="text-xl font-semibold">Cart Items</h2>
+                                    {/* temporary loading indicator while fetching */}
+                                    {loading && (
+                                        <span className="loading loading-spinner loading-sm ml-2"></span>
+                                    )}
                                 </div>
                             </div>
                             <div className="card-body pt-4">

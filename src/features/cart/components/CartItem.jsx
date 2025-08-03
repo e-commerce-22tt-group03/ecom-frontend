@@ -1,7 +1,33 @@
 // src/features/cart/components/CartItem.jsx
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Trash2, Plus, Minus, Tag, AlertCircle } from 'lucide-react';
+
+// For make loading more elegant
+
+const CartItemSkeleton = () => {
+    return (
+        <div className="flex flex-col md:flex-row gap-4 p-4 border border-base-300 rounded-lg animate-pulse">
+            {/* Image Skeleton */}
+            <div className="flex-shrink-0">
+                <div className="w-20 h-20 bg-base-300 rounded-lg"></div>
+            </div>
+            
+            {/* Content Skeleton */}
+            <div className="flex-1 space-y-3">
+                <div className="h-6 bg-base-300 rounded w-3/4"></div>
+                <div className="h-4 bg-base-300 rounded w-1/2"></div>
+                <div className="h-4 bg-base-300 rounded w-1/4"></div>
+            </div>
+            
+            {/* Controls Skeleton */}
+            <div className="flex items-center gap-3">
+                <div className="h-8 w-24 bg-base-300 rounded"></div>
+                <div className="h-8 w-8 bg-base-300 rounded"></div>
+            </div>
+        </div>
+    );
+};
 
 const CartItem = ({ 
     item, 
@@ -12,6 +38,7 @@ const CartItem = ({
 }) => {
     const [localQuantity, setLocalQuantity] = useState(item.quantity);
     const [isQuantityChanged, setIsQuantityChanged] = useState(false);
+    const [imageLoaded, setImageLoaded] = useState(false);
 
     const {
         cart_item_id,
@@ -30,6 +57,10 @@ const CartItem = ({
         product_stock = 999
 
     } = item;
+
+    useEffect(() => {
+        setImageLoaded(false);
+    }, [product_image, cart_item_id]);
 
     const hasDiscount = applied_pricing_rule && final_price < base_price;
     const discountPercentage = hasDiscount 
@@ -64,7 +95,7 @@ const CartItem = ({
     return (
         <div className="flex flex-col md:flex-row gap-4 p-4 border border-base-300 rounded-lg hover:shadow-md transition-shadow">
             {/* Product Image */}
-            <div className="flex-shrink-0">
+            {/* <div className="flex-shrink-0">
                 <div className="w-20 h-20 bg-base-200 rounded-lg overflow-hidden">
                     <img 
                         src={product_image}
@@ -72,6 +103,28 @@ const CartItem = ({
                         className="w-full h-full object-cover"
                         onError={(e) => {
                             e.target.src = "/placeholder-flower.jpg";
+                        }}
+                    />
+                </div>
+            </div> */}
+
+            {/* Product Image with loading state */}
+            <div className="flex-shrink-0">
+                <div className="w-20 h-20 bg-base-200 rounded-lg overflow-hidden relative">
+                    {/* Show skeleton while image is loading */}
+                    {!imageLoaded && (
+                        <div className="w-full h-full bg-base-300 animate-pulse absolute inset-0"></div>
+                    )}
+                    <img 
+                        src={product_image}
+                        alt={product_name}
+                        className={`w-full h-full object-cover transition-opacity duration-300 ${
+                            imageLoaded ? 'opacity-100' : 'opacity-0'
+                        }`}
+                        onLoad={() => setImageLoaded(true)}
+                        onError={(e) => {
+                            e.target.src = "/placeholder-flower.jpg";
+                            setImageLoaded(true);
                         }}
                     />
                 </div>
@@ -204,3 +257,4 @@ const CartItem = ({
 };
 
 export default CartItem;
+export { CartItemSkeleton };

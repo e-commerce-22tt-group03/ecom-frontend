@@ -112,7 +112,7 @@ const Header = () => {
         <Link to="/cart" className="btn btn-ghost btn-circle">
           <div className="indicator">
             <ShoppingCart className="w-5 h-5" />
-            <span className="badge badge-sm indicator-item">3</span>
+            {/* <span className="badge badge-sm indicator-item">3</span> */}
           </div>
         </Link>
 
