@@ -17,11 +17,18 @@ const CartItem = ({
         cart_item_id,
         product_id,
         product_name,
+        // Temporary placeholder for product image
+        product_image = '/placeholder-flower.jpg', 
+        product_condition = 'New Flower', 
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////
         base_price,
         applied_pricing_rule,
         final_price,
         total_price,
-        quantity
+        quantity,
+        // Temporary Product stock limit //////////////////////////////
+        product_stock = 999
+
     } = item;
 
     const hasDiscount = applied_pricing_rule && final_price < base_price;
@@ -30,14 +37,14 @@ const CartItem = ({
         : 0;
 
     const handleQuantityChange = (newQuantity) => {
-        if (newQuantity < 1) return;
-        
+        if (newQuantity < 1 || newQuantity > product_stock) return;
+
         setLocalQuantity(newQuantity);
         setIsQuantityChanged(newQuantity !== quantity);
     };
 
     const handleQuantityUpdate = () => {
-        if (localQuantity !== quantity && localQuantity > 0) {
+        if (localQuantity !== quantity && localQuantity > 0 && localQuantity <= product_stock) {
             onQuantityUpdate(cart_item_id, localQuantity);
             setIsQuantityChanged(false);
         }
@@ -58,9 +65,15 @@ const CartItem = ({
         <div className="flex flex-col md:flex-row gap-4 p-4 border border-base-300 rounded-lg hover:shadow-md transition-shadow">
             {/* Product Image */}
             <div className="flex-shrink-0">
-                <div className="w-20 h-20 bg-base-200 rounded-lg flex items-center justify-center">
-                    {/* Placeholder for product image */}
-                    <span className="text-2xl">🌸</span>
+                <div className="w-20 h-20 bg-base-200 rounded-lg overflow-hidden">
+                    <img 
+                        src={product_image}
+                        alt={product_name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                            e.target.src = "/placeholder-flower.jpg";
+                        }}
+                    />
                 </div>
             </div>
 
@@ -118,7 +131,7 @@ const CartItem = ({
                             <input
                                 type="number"
                                 min="1"
-                                max="99"
+                                max={product_stock} // Stock limit
                                 value={localQuantity}
                                 onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
                                 onKeyPress={handleKeyPress}
@@ -129,7 +142,7 @@ const CartItem = ({
                             
                             <button
                                 onClick={() => handleQuantityChange(localQuantity + 1)}
-                                disabled={localQuantity >= 99 || isUpdating}
+                                disabled={localQuantity >= product_stock || isUpdating}
                                 className="btn btn-sm btn-circle btn-outline"
                             >
                                 <Plus className="h-3 w-3" />

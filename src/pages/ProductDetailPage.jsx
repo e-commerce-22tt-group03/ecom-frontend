@@ -24,6 +24,7 @@ import{
 import {
     addToCart,
     fetchCart,
+    fetchCartWithProductDetails,
     selectAddingToCart,
     selectIsAuthenticated
 } from '../features/cart/cartSlice';
@@ -89,13 +90,22 @@ const ProductDetailPage = () => {
         }
 
         try {
-            await dispatch(addToCart({ 
+            const result = await dispatch(addToCart({ 
                 product_id: product.productId, 
                 quantity: quantity 
             })).unwrap();
             
-            // Refresh cart to get updated data
-            dispatch(fetchCart());
+            console.log('Add to cart result:', result);
+
+            // // Refresh cart to get updated data
+            // dispatch(fetchCart());
+
+            // Temporary version for debugging
+            setTimeout(async () => {
+                const cartResult = await dispatch(fetchCartWithProductDetails());
+                console.log('Enhanced cart result:', cartResult);
+            }, 500);
+
 
             // Show success message (you can add toast notification here)
             console.log(`Added ${quantity}x ${product.name} to cart successfully!`);
@@ -104,6 +114,7 @@ const ProductDetailPage = () => {
             setQuantity(1);
         } catch (error) {
             console.error('Failed to add to cart:', error);
+            alert(`Failed to add to cart. Please try again. ${error}`);
             // You can add error toast notification here
         }
     };

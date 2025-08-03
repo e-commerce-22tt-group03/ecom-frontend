@@ -1,5 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { logout } from "../auth/authSlice"; // Import logout action to clear auth state on cart actions
+import { fetchProductById } from "../products/productsSlice";
+import { TruckElectric } from "lucide-react";
 
 // API Base URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -94,7 +96,6 @@ const handleApiError = (error, rejectWithValue) => {
 // );
 
 // debugging
-
 export const fetchCart = createAsyncThunk(
     'cart/fetchCart',
     async (_, { rejectWithValue, getState }) => {
@@ -147,6 +148,91 @@ export const fetchCart = createAsyncThunk(
         } catch (error) {
             console.error('🛒 Fetch cart error:', error);
             return rejectWithValue(error.message);
+        }
+    }
+);
+
+
+// Since the API response of fetchCart only returns the cart items data without
+// product imageURLs, so i temporarily utilize the fetchProductById
+
+export const fetchCartWithProductDetails = createAsyncThunk(
+    'cart/fetchCartWithProductDetails',
+    async (_, { rejectWithValue, getState, dispatch }) => {
+        try {
+            // Fetch the cart data first
+            const cartResult = await dispatch(fetchCart()).unwrap();
+
+            console.log('🛒 Cart data fetched:', cartResult);
+
+            if (!cartResult.items || cartResult.items.length === 0) {
+                return cartResult; // Return empty cart if no items
+            }
+
+            // Extract unique product IDs from the cart items
+            const productIds = [...new Set(cartResult.items.map(item => item.product_id))];
+            console.log('🛒 Unique product IDs:', productIds);
+
+            // Fetch product details for each unique product ID
+            const productDetailsPromises = productIds.map(async (productId) => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/products/${productId}`);
+                    if (!response.ok) {
+                        console.warn(`Failed to fetch product ${productId}`);
+                        return null; // Skip this product if not found
+                    }
+                    const data = await response.json();
+                    return data.status === 'success' && data.data ? data.data.product : null;
+                } catch (error) {
+                    console.warn(`Error fetching product ${productId}:`, error);
+                    return null; // Skip this product if there's an error
+                }
+            });
+
+            const productDetails = await Promise.all(productDetailsPromises);
+            console.log('Fetched product details:', productDetails);
+
+            // Create a map of product details by ID for quick lookup
+            const productMap = {};
+            productDetails.forEach(product => {
+                if (product && product.productId) {
+                    productMap[product.productId] = product;
+                }
+            });
+
+            // Add product details
+            const enrichedItems = cartResult.items.map(cartItem => {
+                const productDetail = productMap[cartItem.product_id];
+
+                return {
+                    ...cartItem,
+                    // Add product details if available
+                    product_name: productDetail?.name || cartItem.product_name || 'Unknown Product',
+                    product_image: productDetail?.imageUrl || '/placeholder-flower.jpg',
+                    product_description: productDetail?.description || '',
+                    product_condition: productDetail?.condition || 'New Flower',
+                    product_base_price: productDetail?.basePrice || cartItem.final_price,
+                    product_stock: productDetail?.stockQuantity || 0,
+                    // Keep original cart item data
+                    cart_item_id: cartItem.cart_item_id,
+                    product_id: cartItem.product_id,
+                    quantity: cartItem.quantity,
+                    final_price: cartItem.final_price,
+                    total_price: cartItem.total_price || (cartItem.final_price * cartItem.quantity),
+                    created_at: cartItem.created_at,
+                    updated_at: cartItem.updated_at
+                };
+            });
+
+            console.log('Enriched cart items:', enrichedItems);
+
+            return {
+                ...cartResult,
+                items: enrichedItems,
+            };
+        } catch (error) {
+            console.error('Error fetching cart with product details:', error);
+            return rejectWithValue(error.message || 'Failed to fetch cart with product details');
         }
     }
 );
@@ -518,7 +604,8 @@ const cartSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            // ===== FETCH CART =====
+            // ===== FETCH CART =====  Temporarily disabled for debugging
+            // Wait for API cart response with imageUrl
             .addCase(fetchCart.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -536,6 +623,27 @@ const cartSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload;
                 // Check if error is auth-related
+                if (action.payload?.includes('Authentication required')) {
+                    state.requiresAuth = true;
+                }
+            })
+            // ===== FETCH CART WITH PRODUCT DETAILS ===== temporary version
+            .addCase(fetchCartWithProductDetails.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+                state.requiresAuth = false;
+            })
+            .addCase(fetchCartWithProductDetails.fulfilled, (state, action) => {
+                state.loading = false;
+                state.user_id = action.payload.user_id;
+                state.items = action.payload.items || [];
+                state.cart_total = action.payload.cart_total || 0;
+                state.requiresAuth = false;
+                console.log('Cart state updated with enriched items:', state.items);
+            })
+            .addCase(fetchCartWithProductDetails.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
                 if (action.payload?.includes('Authentication required')) {
                     state.requiresAuth = true;
                 }
@@ -687,7 +795,8 @@ export const {
     clearErrors,
     clearRecentlyAdded,
     resetCart,
-    setRequiresAuth
+    setRequiresAuth,
 } = cartSlice.actions;
+
 
 export default cartSlice.reducer;

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import {
     fetchCart,
+    fetchCartWithProductDetails, // temporary version
     updateCartItemQuantity,
     removeFromCart,
     clearCart,
@@ -55,7 +56,9 @@ const CartPage = () => {
     // Fetch cart on component mount
     useEffect(() => {
         if (isAuthenticated) {
-            dispatch(fetchCart());
+            // Fetch cart with product details
+            dispatch(fetchCartWithProductDetails());
+            // dispatch(fetchCart());
         } else {
             // Maybe not need later, but for now:
             // Reset Cart state if not authenticated
@@ -102,7 +105,8 @@ const CartPage = () => {
 
     const handleRefresh = () => {
         if (isAuthenticated) {
-            dispatch(fetchCart());
+            // dispatch(fetchCart());
+            dispatch(fetchCartWithProductDetails()); // temporary version
         }
     };
 

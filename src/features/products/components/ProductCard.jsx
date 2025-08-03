@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import {
     addToCart,
     fetchCart,
+    fetchCartWithProductDetails,
     selectAddingToCart,
     selectIsAuthenticated
 } from '../../cart/cartSlice';
@@ -67,7 +68,12 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
             })).unwrap();
 
             // Refresh cart to get updated data
-            dispatch(fetchCart());
+            // dispatch(fetchCart());
+
+            ///////////////////////////////////////////////////////////////////////////////////////////
+            // CHANGE FOR DEBUGGING HERE
+            // Temporary version to fetch cart with product details
+            dispatch(fetchCartWithProductDetails());
 
             // Show success message (may add toast notification here)
             console.log(`Added ${name} to cart successfully!`);
