@@ -16,6 +16,8 @@ import OrderDetailsPage from "../pages/admin/OrderDetailsPage";
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
 import ProductDetailPage from '../pages/ProductDetailPage';
+import OrderPage from "../pages/OrderPage";
+import ProfilePage from "../pages/ProfilePage";
 
 const AppRoutes = () => {
     return (
