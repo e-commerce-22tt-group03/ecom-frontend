@@ -14,6 +14,7 @@ import ManageProductsPage from "../pages/admin/ManageProductsPage";
 import ManageUsersPage from "../pages/admin/ManageUsersPage";
 import OrderDetailsPage from "../pages/admin/OrderDetailsPage";
 import LoginPage from '../pages/LoginPage';
+import ManagePricingRulesPage from '../pages/admin/ManagePricingRulesPage';
 import RegisterPage from '../pages/RegisterPage';
 import ProductDetailPage from '../pages/ProductDetailPage';
 import OrderPage from "../pages/OrderPage";
@@ -48,6 +49,7 @@ const AppRoutes = () => {
                 <Route path="/admin/orders" element={<ManageOrdersPage />} />
                 <Route path="/admin/orders/:orderId" element={<OrderDetailsPage />} />
                 <Route path="/admin/users" element={<ManageUsersPage />} />
+                <Route path="/admin/pricing-rules" element={<ManagePricingRulesPage />} />
                 <Route path="/admin/settings" element={<h2>Admin Settings</h2>} />
             </Route>
 

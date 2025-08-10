@@ -4,6 +4,7 @@ import profileReducer from '../features/profile/profileSlice';
 import ordersReducer from '../features/orders/ordersSlice'; // Updated to use merged slice
 import usersReducer from '../features/users/usersSlice';
 import productsReducer from '../features/products/productsSlice';
+import pricingRulesReducer from '../features/pricingRules/pricingRulesSlice';
 
 // We will create and import these slices later
 // import authReducer from '../features/auth/authSlice';
@@ -14,6 +15,7 @@ export const store = configureStore({
         orders: ordersReducer,
         auth: authReducer,
         users: usersReducer,
-        profile: profileReducer
+        profile: profileReducer,
+        pricingRules: pricingRulesReducer
     },
 });
