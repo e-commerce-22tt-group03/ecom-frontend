@@ -16,15 +16,15 @@ import {
 import{
     fetchProductById,
     clearCurrentProduct,
-    clearProductError,
+    // clearProductError,
     selectCurrentProduct,
     selectProductLoading,
     selectProductError
-} from '../features/products/productsSlice';
+} from '../../features/products/productsSlice';
 import {
     addToCart,
     selectAddingToCart,
-} from '../features/cart/cartSlice';
+} from '../../features/cart/cartSlice';
 
 const ProductDetailPage = () => {
     const { id } = useParams();

@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import axios from 'axios';
 import {
   fetchOrderById as fetchOrderByIdApi,
   fetchOrders as fetchOrdersApi,
@@ -8,12 +9,39 @@ import {
 
 export const fetchOrders = createAsyncThunk(
   'orders/fetchOrders',
-  async (params, { rejectWithValue }) => {
+  async (params, { getState, rejectWithValue }) => {
     try {
-      const data = await fetchOrdersApi(params);
-      return data;
+      // If params exist, use API method (for admin/pagination)
+      if (params) {
+        const data = await fetchOrdersApi(params);
+        return data;
+      } else {
+        // Otherwise use direct axios call for user orders
+        const token = getState().auth.token;
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/orders`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        return { orders: res.data.data.orders };
+      }
     } catch (error) {
-      return rejectWithValue(error.toString());
+      return rejectWithValue(error.response?.data?.message || error.toString());
+    }
+  }
+);
+
+// Fetch order items for a specific order
+export const fetchOrderItems = createAsyncThunk(
+  'orders/fetchItems',
+  async (orderId, { getState, rejectWithValue }) => {
+    const token = getState().auth.token;
+    try {
+      // Use the existing getOrderById endpoint which includes items
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/orders/${orderId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return { orderId, items: res.data.data.items };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to fetch order items');
     }
   }
 );
@@ -55,7 +83,11 @@ export const updateShippingInfo = createAsyncThunk(
 const ordersSlice = createSlice({
   name: 'orders',
   initialState: {
-    items: [],
+    // Combined state from both slices
+    orders: [], // For user orders (from orderSlice.js)
+    items: [], // For admin orders list (from ordersSlice.js)
+    orderItems: {}, // Store items by order_id
+    selectedOrder: null, // For admin order details
     pagination: {
       current_page: 1,
       total_pages: 1,
@@ -63,8 +95,13 @@ const ordersSlice = createSlice({
     },
     loading: false,
     error: null,
+    itemsLoading: {} // Track loading state for individual order items
   },
-  reducers: {},
+  reducers: {
+    clearOrderError: (state) => {
+      state.error = null;
+    }
+  },
   extraReducers: (builder) => {
     builder
       // Cases for fetchOrders
@@ -74,12 +111,33 @@ const ordersSlice = createSlice({
       })
       .addCase(fetchOrders.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload.orders;
-        state.pagination = action.payload.pagination;
+        // Handle both API formats
+        if (action.payload.pagination) {
+          // Admin format with pagination
+          state.items = action.payload.orders;
+          state.pagination = action.payload.pagination;
+        } else {
+          // User format without pagination
+          state.orders = action.payload.orders;
+        }
       })
       .addCase(fetchOrders.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      // Cases for fetchOrderItems
+      .addCase(fetchOrderItems.pending, (state, action) => {
+        const orderId = action.meta.arg;
+        state.itemsLoading[orderId] = true;
+      })
+      .addCase(fetchOrderItems.fulfilled, (state, action) => {
+        const { orderId, items } = action.payload;
+        state.orderItems[orderId] = items;
+        state.itemsLoading[orderId] = false;
+      })
+      .addCase(fetchOrderItems.rejected, (state, action) => {
+        const orderId = action.meta.arg;
+        state.itemsLoading[orderId] = false;
       })
       // Cases for fetchOrderById
       .addCase(fetchOrderById.pending, (state) => {
@@ -110,4 +168,5 @@ const ordersSlice = createSlice({
   }
 });
 
+export const { clearOrderError } = ordersSlice.actions;
 export default ordersSlice.reducer;

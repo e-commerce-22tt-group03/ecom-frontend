@@ -23,9 +23,9 @@ import {
     selectRemovingItem,
     selectClearingCart,
     clearErrors
-} from '../features/cart/cartSlice';
-import CartItem from '../features/cart/components/CartItem';
-import CartSummary from '../features/cart/components/CartSummary';
+} from '../../features/cart/cartSlice';
+import CartItem from '../../features/cart/components/CartItem';
+import CartSummary from '../../features/cart/components/CartSummary';
 
 const CartPage = () => {
     const dispatch = useDispatch();
