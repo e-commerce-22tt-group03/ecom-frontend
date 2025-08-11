@@ -1,26 +1,20 @@
 // src/pages/CartPage.jsx
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { 
     ShoppingCart, 
     Trash2, 
-    Plus, 
-    Minus, 
     ArrowLeft,
     RefreshCw,
     AlertTriangle,
     ShoppingBag,
-    LogIn,
-    UserPlus
 } from 'lucide-react';
 import {
     fetchCart,
-    fetchCartWithProductDetails, // temporary version
     updateCartItemQuantity,
     removeFromCart,
     clearCart,
-    resetCart, // temporary, may not need later.
     selectCartItems,
     selectCartTotal,
     selectCartLoading,
@@ -28,8 +22,6 @@ import {
     selectUpdatingItem,
     selectRemovingItem,
     selectClearingCart,
-    selectCartRequiresAuth,
-    selectIsAuthenticated,
     clearErrors
 } from '../features/cart/cartSlice';
 import CartItem from '../features/cart/components/CartItem';
@@ -37,9 +29,7 @@ import CartSummary from '../features/cart/components/CartSummary';
 
 const CartPage = () => {
     const dispatch = useDispatch();
-    const navigate = useNavigate();
 
-    // Redux state
     const items = useSelector(selectCartItems);
     const cartTotal = useSelector(selectCartTotal);
     const loading = useSelector(selectCartLoading);
@@ -47,48 +37,22 @@ const CartPage = () => {
     const updatingItem = useSelector(selectUpdatingItem);
     const removingItem = useSelector(selectRemovingItem);
     const clearingCart = useSelector(selectClearingCart);
-    const requiresAuth = useSelector(selectCartRequiresAuth);
-    const isAuthenticated = useSelector(selectIsAuthenticated);
     
-    // Local state
     const [showClearConfirm, setShowClearConfirm] = useState(false);
-    const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
-
-
-    // Fetch cart on component mount
+    // Fetch cart on mount 
+    // Now let CartSlice.js handle authentication/session management and refetching cart
     useEffect(() => {
-        if (isAuthenticated) {
-            // Fetch cart with product details
-            dispatch(fetchCartWithProductDetails())
-                .finally(() => {
-                    setInitialLoadComplete(true); // After dispatch success
-                })
-            // dispatch(fetchCart());
-        } else {
-            // Maybe not need later, but for now:
-            // Reset Cart state if not authenticated
-            dispatch(resetCart());
-            setInitialLoadComplete(true);
-        }
-        
-        // Clear any previous errors
-        return () => {
+        dispatch(fetchCart());
+        return () => { 
             dispatch(clearErrors());
         };
-    }, [dispatch, isAuthenticated]);
+    }, [dispatch]);
 
-    // Handlers
     const handleQuantityUpdate = async (itemId, newQuantity) => {
         if (newQuantity < 1) return;
-        
         try {
             await dispatch(updateCartItemQuantity({ itemId, quantity: newQuantity })).unwrap();
-            // Refresh cart to get updated totals
-            // dispatch(fetchCart());
-
-            // Temporary version to fetch cart with product details
-            dispatch(fetchCartWithProductDetails());
         } catch (error) {
             console.error('Failed to update quantity:', error);
         }
@@ -97,11 +61,6 @@ const CartPage = () => {
     const handleRemoveItem = async (itemId) => {
         try {
             await dispatch(removeFromCart(itemId)).unwrap();
-            // Refresh cart to get updated totals
-            // dispatch(fetchCart());
-
-            // Temporary version to fetch cart with product details
-            dispatch(fetchCartWithProductDetails());
         } catch (error) {
             console.error('Failed to remove item:', error);
         }
@@ -117,62 +76,11 @@ const CartPage = () => {
     };
 
     const handleRefresh = () => {
-        if (isAuthenticated) {
-            // dispatch(fetchCart());
-            dispatch(fetchCartWithProductDetails()); // temporary version
-        }
+        dispatch(fetchCart());
     };
 
-    const handleLogin = () => {
-        navigate('/login');
-    };
-
-    const handleRegister = () => {
-        navigate('/register');
-    };
-
-    // Show authentication required state
-    if (!isAuthenticated || requiresAuth) {
+    if (loading && items.length === 0) {
         return (
-            <div className="container mx-auto px-4 py-8">
-                <div className="text-center py-16">
-                    <div className="mx-auto w-24 h-24 bg-base-200 rounded-full flex items-center justify-center mb-6">
-                        <LogIn className="h-12 w-12 text-base-content/40" />
-                    </div>
-                    <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
-                    <p className="text-base-content/70 mb-8 max-w-md mx-auto">
-                        Please log in to view your cart and manage your items.
-                    </p>
-                    <div className="flex gap-4 justify-center">
-                        <button onClick={handleLogin} className="btn btn-primary">
-                            <LogIn className="mr-2 h-4 w-4" />
-                            Log In
-                        </button>
-                        <button onClick={handleRegister} className="btn btn-outline">
-                            <UserPlus className="mr-2 h-4 w-4" />
-                            Register
-                        </button>
-                    </div>
-                    <div className="mt-8">
-                        <Link to="/products" className="btn btn-ghost">
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Continue Shopping
-                        </Link>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    if ((loading && !initialLoadComplete) || (loading && items.length === 0)) {
-        return (
-            // <div className="container mx-auto px-4 py-8">
-            //     <div className="flex justify-center items-center min-h-96">
-            //         <span className="loading loading-spinner loading-lg"></span>
-            //     </div>
-            // </div>
-
-            // temporary quick fix
             <div className="container mx-auto px-4 py-8">
                 <div className="flex flex-col items-center justify-center min-h-96">
                     <span className="loading loading-spinner loading-lg mb-4"></span>
@@ -185,53 +93,6 @@ const CartPage = () => {
 
     return (
         <div className="container mx-auto px-4 py-8">
-            {/* Header Section */}
-            {/* <div className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-4">
-                        <Link to="/products" className="btn btn-ghost btn-sm">
-                            <ArrowLeft className="h-4 w-4 mr-2" />
-                            Continue Shopping
-                        </Link>
-                        <div className="divider divider-horizontal"></div>
-                        <h1 className="text-4xl font-bold flex items-center gap-3">
-                            <ShoppingCart className="h-8 w-8" />
-                            Shopping Cart
-                        </h1>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={handleRefresh}
-                            className="btn btn-outline btn-sm"
-                            disabled={loading}
-                        >
-                            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                        </button>
-                        
-                        {items.length > 0 && (
-                            <button
-                                onClick={() => setShowClearConfirm(true)}
-                                className="btn btn-error btn-outline btn-sm"
-                                disabled={clearingCart}
-                            >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Clear Cart
-                            </button>
-                        )}
-                    </div>
-                </div>
-                
-                <div className="flex items-center gap-4 text-base-content/70">
-                    <span className="flex items-center gap-2">
-                        <ShoppingBag className="h-4 w-4" />
-                        {items.length} {items.length === 1 ? 'item' : 'items'} in cart
-                    </span>
-                    <div className="divider divider-horizontal"></div>
-                    <span>Total: ${cartTotal.toFixed(2)}</span>
-                </div>
-            </div> */}  {/* The above header section is having a really bad design */}
-
             <div className="mb-8">
                 {/* Breadcrumb */}
                 <div className="breadcrumbs text-sm mb-6">
@@ -377,7 +238,6 @@ const CartPage = () => {
                 <div className="modal modal-open">
                     <div className="modal-box">
                         <h3 className="font-bold text-lg flex items-center gap-2">
-                            <AlertTriangle className="h-5 w-5 text-warning" />
                             Clear Cart?
                         </h3>
                         <p className="py-4">

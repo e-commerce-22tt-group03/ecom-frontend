@@ -1,5 +1,5 @@
 // src/features/cart/components/CartItem.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Trash2, Plus, Minus, Tag, AlertCircle } from 'lucide-react';
 
@@ -39,17 +39,18 @@ const CartItem = ({
     const [localQuantity, setLocalQuantity] = useState(item.quantity);
     const [isQuantityChanged, setIsQuantityChanged] = useState(false);
     const [imageLoaded, setImageLoaded] = useState(false);
+    const imgRef = useRef(null);
 
     const {
         cart_item_id,
         product_id,
         product_name,
-        // Temporary placeholder for product image
-        product_image = '/placeholder-flower.jpg', 
-        product_condition = 'New Flower', 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // raw fields
+        image_url,
+        // dynamic pricing fields
         base_price,
         applied_pricing_rule,
+        dynamic_pricing_result,
         final_price,
         total_price,
         quantity,
@@ -58,11 +59,26 @@ const CartItem = ({
 
     } = item;
 
+    const displayRule = applied_pricing_rule?.rule_name || dynamic_pricing_result?.rule_name;
+    const product_image = item.product_image || image_url || '/placeholder-flower.jpg';
+
     useEffect(() => {
+        // reset and immediately mark loaded if browser already cached the image
         setImageLoaded(false);
+        const img = imgRef.current;
+        if (img && img.complete && img.naturalWidth > 0) {
+            // ensure we flip state after mount
+            requestAnimationFrame(() => setImageLoaded(true));
+        }
     }, [product_image, cart_item_id]);
 
-    const hasDiscount = applied_pricing_rule && final_price < base_price;
+    // Sync local input with server-updated quantity (e.g., after refresh)
+    useEffect(() => {
+        setLocalQuantity(quantity);
+        setIsQuantityChanged(false);
+    }, [quantity]);
+
+    const hasDiscount = final_price < base_price;
     const discountPercentage = hasDiscount 
         ? Math.round(((base_price - final_price) / base_price) * 100)
         : 0;
@@ -94,20 +110,6 @@ const CartItem = ({
 
     return (
         <div className="flex flex-col md:flex-row gap-4 p-4 border border-base-300 rounded-lg hover:shadow-md transition-shadow">
-            {/* Product Image */}
-            {/* <div className="flex-shrink-0">
-                <div className="w-20 h-20 bg-base-200 rounded-lg overflow-hidden">
-                    <img 
-                        src={product_image}
-                        alt={product_name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                            e.target.src = "/placeholder-flower.jpg";
-                        }}
-                    />
-                </div>
-            </div> */}
-
             {/* Product Image with loading state */}
             <div className="flex-shrink-0">
                 <div className="w-20 h-20 bg-base-200 rounded-lg overflow-hidden relative">
@@ -116,8 +118,11 @@ const CartItem = ({
                         <div className="w-full h-full bg-base-300 animate-pulse absolute inset-0"></div>
                     )}
                     <img 
+                        ref={imgRef}
                         src={product_image}
                         alt={product_name}
+                        decoding="async"
+                        loading="lazy"
                         className={`w-full h-full object-cover transition-opacity duration-300 ${
                             imageLoaded ? 'opacity-100' : 'opacity-0'
                         }`}
@@ -160,18 +165,41 @@ const CartItem = ({
                         </div>
 
                         {/* Applied Pricing Rule */}
-                        {applied_pricing_rule && (
+                        {displayRule && hasDiscount && (
                             <div className="flex items-center gap-1 mt-2">
                                 <Tag className="h-3 w-3 text-success" />
                                 <span className="text-xs text-success font-medium">
-                                    {applied_pricing_rule.rule_name}
+                                    {displayRule}
                                 </span>
                             </div>
                         )}
                     </div>
 
-                    {/* Quantity Controls */}
+                    {/* Controls Row */}
                     <div className="flex items-center gap-3">
+                        {/* Update/Reset Buttons (left), keep space reserved to avoid shifting */}
+                        <div className={`flex gap-1 ${isQuantityChanged ? '' : 'invisible'}`}>
+                            <button
+                                onClick={handleQuantityUpdate}
+                                disabled={isUpdating}
+                                className="btn btn-primary btn-xs"
+                            >
+                                {isUpdating ? (
+                                    <span className="loading loading-spinner loading-xs"></span>
+                                ) : (
+                                    'Update'
+                                )}
+                            </button>
+                            <button
+                                onClick={resetQuantity}
+                                disabled={isUpdating}
+                                className="btn btn-ghost btn-xs"
+                            >
+                                Reset
+                            </button>
+                        </div>
+
+                        {/* Quantity Controls */}
                         <div className="flex items-center gap-1">
                             <button
                                 onClick={() => handleQuantityChange(localQuantity - 1)}
@@ -184,7 +212,7 @@ const CartItem = ({
                             <input
                                 type="number"
                                 min="1"
-                                max={product_stock} // Stock limit
+                                max={product_stock}
                                 value={localQuantity}
                                 onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
                                 onKeyPress={handleKeyPress}
@@ -201,30 +229,6 @@ const CartItem = ({
                                 <Plus className="h-3 w-3" />
                             </button>
                         </div>
-
-                        {/* Update/Reset Buttons */}
-                        {isQuantityChanged && (
-                            <div className="flex gap-1">
-                                <button
-                                    onClick={handleQuantityUpdate}
-                                    disabled={isUpdating}
-                                    className="btn btn-primary btn-xs"
-                                >
-                                    {isUpdating ? (
-                                        <span className="loading loading-spinner loading-xs"></span>
-                                    ) : (
-                                        'Update'
-                                    )}
-                                </button>
-                                <button
-                                    onClick={resetQuantity}
-                                    disabled={isUpdating}
-                                    className="btn btn-ghost btn-xs"
-                                >
-                                    Reset
-                                </button>
-                            </div>
-                        )}
 
                         {/* Remove Button */}
                         <button

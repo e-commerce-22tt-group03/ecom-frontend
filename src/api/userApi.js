@@ -10,7 +10,7 @@ export const fetchUsers = async (params = {}) => {
     const response = await api.get('/auth/admin/users', { params });
     return response.data.data;
   } catch (error) {
-    throw error.response?.data?.message || 'Failed to fetch users.';
+    throw error.message || 'Failed to fetch users.';
   }
 };
 
@@ -25,7 +25,7 @@ export const updateUserRole = async (userId, role) => {
     const response = await api.put(`/auth/admin/users/${userId}/role`, { role });
     return response.data.data;
   } catch (error) {
-    throw error.response?.data?.message || 'Failed to update user role.';
+    throw error.message || 'Failed to update user role.';
   }
 };
 
@@ -39,6 +39,6 @@ export const deleteUser = async (userId) => {
     const response = await api.delete(`/auth/admin/users/${userId}`);
     return response.data;
   } catch (error) {
-    throw error.response?.data?.message || 'Failed to delete user.';
+    throw error.message || 'Failed to delete user.';
   }
 };

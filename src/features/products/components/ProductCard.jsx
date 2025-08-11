@@ -4,23 +4,15 @@ import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
     addToCart,
-    fetchCart,
-    fetchCartWithProductDetails,
     selectAddingToCart,
-    selectIsAuthenticated
 } from '../../cart/cartSlice';
-import { useNavigate } from 'react-router-dom';
 
 const ProductCard = ({ product, viewMode = 'grid' }) => {
     const dispatch = useDispatch();
-    const navigate = useNavigate();
     const [isWishlisted, setIsWishlisted] = useState(false);
     
-    // Cart state
     const addingToCart = useSelector(selectAddingToCart);
-    const isAuthenticated = useSelector(selectIsAuthenticated);
 
-    // Map backend data structure to component
     const {
         productId: id,
         name = "Sample Flower",
@@ -33,7 +25,6 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
         totalSold = 0
     } = product || {};
 
-    // Calculate discount if there's a price difference
     const discount = originalPrice && originalPrice > price 
         ? Math.round(((originalPrice - price) / originalPrice) * 100)
         : 0;
@@ -41,45 +32,23 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
     const isInStock = stockQuantity > 0;
     const isLowStock = stockQuantity <= 5 && stockQuantity > 0;
     const isNew = condition === 'New Flower';
-    const isBestSelling = totalSold > 10; // May adjust this threshold
+    const isBestSelling = totalSold > 10;
 
+    // Now let the Cart function handle authen/session management and refetching
     const handleAddToCart = async (e) => {
         e.preventDefault();
         e.stopPropagation();
 
-        if (!isAuthenticated) {
-            navigate('/login', {
-                state: {
-                    from: location.pathname,
-                    message: 'Please log in to add items to your cart'
-                }
-            });
-            return;
-        }
-
-        if (!isInStock) {
-            return;
-        }
+        if (!isInStock) return;
 
         try {
-            await dispatch(addToCart({
-                product_id: id,
-                quantity: 1
+            await dispatch(addToCart({ 
+                product_id: id, 
+                quantity: 1 
             })).unwrap();
-
-            // Refresh cart to get updated data
-            // dispatch(fetchCart());
-
-            ///////////////////////////////////////////////////////////////////////////////////////////
-            // CHANGE FOR DEBUGGING HERE
-            // Temporary version to fetch cart with product details
-            dispatch(fetchCartWithProductDetails());
-
-            // Show success message (may add toast notification here)
-            console.log(`Added ${name} to cart successfully!`);
+            // success toast could be added here
         } catch (error) {
             console.error('Failed to add to cart:', error);
-            // May add error toast notification here
         }
     };
 
@@ -87,7 +56,6 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
         e.preventDefault();
         e.stopPropagation();
         setIsWishlisted(!isWishlisted);
-        // TODO: Dispatch wishlist action
     };
 
     const renderStars = (rating) => {

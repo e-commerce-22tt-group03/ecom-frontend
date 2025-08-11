@@ -7,15 +7,19 @@ const CartSummary = ({ items, cartTotal, loading }) => {
     
     // Calculate savings
     const totalSavings = items.reduce((total, item) => {
-        if (item.applied_pricing_rule && item.final_price < item.base_price) {
-            return total + ((item.base_price - item.final_price) * item.quantity);
+        const base = item.base_price ?? item.product_base_price ?? item.final_price;
+        const final = item.final_price ?? item.dynamicPrice ?? 0;
+        if (base && final && final < base) {
+            return total + ((base - final) * item.quantity);
         }
         return total;
     }, 0);
 
-    const hasActiveDiscounts = items.some(item => 
-        item.applied_pricing_rule && item.final_price < item.base_price
-    );
+    const hasActiveDiscounts = items.some(item => {
+        const base = item.base_price ?? item.product_base_price ?? item.final_price;
+        const final = item.final_price ?? item.dynamicPrice ?? 0;
+        return base && final && final < base;
+    });
 
     return (
         <div className="card bg-base-100 shadow-lg sticky top-8">
@@ -30,7 +34,7 @@ const CartSummary = ({ items, cartTotal, loading }) => {
                 <div className="space-y-3 mb-6">
                     <div className="flex justify-between">
                         <span>Items ({itemCount})</span>
-                        <span>${cartTotal.toFixed(2)}</span>
+                        <span>${Number(cartTotal || 0).toFixed(2)}</span>
                     </div>
                     
                     {/* Show savings if any */}
@@ -53,7 +57,7 @@ const CartSummary = ({ items, cartTotal, loading }) => {
                     
                     <div className="flex justify-between text-lg font-bold">
                         <span>Total</span>
-                        <span className="text-primary">${cartTotal.toFixed(2)}</span>
+                        <span className="text-primary">${Number(cartTotal || 0).toFixed(2)}</span>
                     </div>
                 </div>
 
@@ -66,12 +70,16 @@ const CartSummary = ({ items, cartTotal, loading }) => {
                         </h4>
                         <div className="space-y-1">
                             {items
-                                .filter(item => item.applied_pricing_rule && item.final_price < item.base_price)
+                                .filter(item => {
+                                    const base = item.base_price ?? item.product_base_price ?? item.final_price;
+                                    const final = item.final_price ?? item.dynamicPrice ?? 0;
+                                    return base && final && final < base;
+                                })
                                 .map(item => (
                                     <div key={item.cart_item_id} className="text-sm">
-                                        <span className="font-medium">{item.applied_pricing_rule.rule_name}</span>
+                                        <span className="font-medium">{item.applied_pricing_rule?.rule_name || item.dynamic_pricing_result?.rule_name || 'Discount'}</span>
                                         <span className="text-success ml-2">
-                                            -${((item.base_price - item.final_price) * item.quantity).toFixed(2)}
+                                            -${(((item.base_price ?? item.product_base_price ?? item.final_price) - (item.final_price ?? item.dynamicPrice ?? 0)) * item.quantity).toFixed(2)}
                                         </span>
                                     </div>
                                 ))}
