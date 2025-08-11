@@ -16,7 +16,8 @@ export const getGuestSession = createAsyncThunk(
       const res = await api.get('/auth/guest/session');
       return { exists: true, data: res.data?.data };
     } catch (error) {
-      if (error.status === 404) {
+      // Treat 401 (expired/invalid guest cookie) like no session, same as 404
+      if (error.status === 404 || error.status === 401) {
         return rejectWithValue({ notFound: true });
       }
       return rejectWithValue({ message: error.message });
