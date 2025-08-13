@@ -4,7 +4,6 @@ import ProductList from "../features/products/components/ProductList";
 // Importing the Pages
 import HomePage from "../pages/HomePage";
 // These pages will be create later:
-// import ProductsPage from '../pages/ProductsPage';
 import AdminRoute from '../components/common/AdminRoute';
 import AddProductPage from "../pages/admin/AddProductPage";
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
@@ -13,12 +12,13 @@ import ManageOrdersPage from "../pages/admin/ManageOrdersPage";
 import ManageProductsPage from "../pages/admin/ManageProductsPage";
 import ManageUsersPage from "../pages/admin/ManageUsersPage";
 import OrderDetailsPage from "../pages/admin/OrderDetailsPage";
-import LoginPage from '../pages/LoginPage';
+import LoginPage from '../pages/auth/LoginPage';
 import ManagePricingRulesPage from '../pages/admin/ManagePricingRulesPage';
-import RegisterPage from '../pages/RegisterPage';
-import ProductDetailPage from '../pages/ProductDetailPage';
-import OrderPage from "../pages/OrderPage";
-import ProfilePage from "../pages/ProfilePage";
+import RegisterPage from '../pages/auth/RegisterPage';
+import ProductDetailPage from '../pages/products/ProductDetailPage';
+import OrderPage from "../pages/user/OrderPage";
+import ProfilePage from "../pages/user/ProfilePage";
+import CartPage from '../pages/cart/CartPage';
 
 const AppRoutes = () => {
     return (
@@ -34,9 +34,11 @@ const AppRoutes = () => {
             <Route path="/profile" element={<ProfilePage />} />
             {/* Product Detail Route */}
             <Route path="/products/:id" element={<ProductDetailPage />} />
+            
+            {/* Cart Route */}
+            <Route path="/cart" element={<CartPage />} />
 
             {/* Future routes - will be implemented later */}
-            {/* <Route path="/cart" element={<CartPage />} /> */}
             {/* <Route path="/checkout" element={<CheckoutPage />} /> */}
             {/* <Route path="/orders" element={<OrdersPage />} /> */}
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProfile, updateProfile } from '../features/profile/profileSlice';
-import ProfileSidebar from '../features/profile/ProfileSidebar';
+import { fetchProfile, updateProfile } from '../../features/profile/profileSlice';
+import ProfileSidebar from '../../features/profile/ProfileSidebar';
 import axios from 'axios';
 
 const ProfilePage = () => {

@@ -1,11 +1,18 @@
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Heart, Star, Eye } from 'lucide-react';
 import { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import {
+    addToCart,
+    selectAddingToCart,
+} from '../../cart/cartSlice';
 
 const ProductCard = ({ product, viewMode = 'grid' }) => {
+    const dispatch = useDispatch();
     const [isWishlisted, setIsWishlisted] = useState(false);
     
-    // Map backend data structure to component
+    const addingToCart = useSelector(selectAddingToCart);
+
     const {
         productId: id,
         name = "Sample Flower",
@@ -18,7 +25,6 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
         totalSold = 0
     } = product || {};
 
-    // Calculate discount if there's a price difference
     const discount = originalPrice && originalPrice > price 
         ? Math.round(((originalPrice - price) / originalPrice) * 100)
         : 0;
@@ -26,20 +32,30 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
     const isInStock = stockQuantity > 0;
     const isLowStock = stockQuantity <= 5 && stockQuantity > 0;
     const isNew = condition === 'New Flower';
-    const isBestSelling = totalSold > 10; // May adjust this threshold
+    const isBestSelling = totalSold > 10;
 
-    const handleAddToCart = (e) => {
+    // Now let the Cart function handle authen/session management and refetching
+    const handleAddToCart = async (e) => {
         e.preventDefault();
         e.stopPropagation();
-        // TODO: Dispatch add to cart action when cart management is ready
-        console.log(`Adding ${name} to cart`);
+
+        if (!isInStock) return;
+
+        try {
+            await dispatch(addToCart({ 
+                product_id: id, 
+                quantity: 1 
+            })).unwrap();
+            // success toast could be added here
+        } catch (error) {
+            console.error('Failed to add to cart:', error);
+        }
     };
 
     const handleWishlistToggle = (e) => {
         e.preventDefault();
         e.stopPropagation();
         setIsWishlisted(!isWishlisted);
-        // TODO: Dispatch wishlist action
     };
 
     const renderStars = (rating) => {
@@ -142,9 +158,14 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
                             <button 
                                 onClick={handleAddToCart}
                                 className="btn btn-primary"
-                                disabled={!isInStock}
+                                disabled={!isInStock || addingToCart}
                             >
-                                <ShoppingCart className="mr-2 h-4 w-4" />
+                                {addingToCart ? (
+                                    <span className="loading loading-spinner loading-sm mr-2"></span>
+
+                                ) : (
+                                    <ShoppingCart className="mr-2 h-4 w-4" />
+                                )}
                                 Add to Cart
                             </button>
                         </div>
@@ -271,9 +292,13 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
                     <button 
                         onClick={handleAddToCart}
                         className="btn btn-primary btn-sm"
-                        disabled={!isInStock}
+                        disabled={!isInStock || addingToCart}
                     >
-                        <ShoppingCart className="h-4 w-4" />
+                        {addingToCart ? (
+                            <span className="loading loading-spinner loading-xs"></span>
+                        ) : (
+                            <ShoppingCart className="h-4 w-4" />
+                        )}
                     </button>
                 </div>
             </div>

@@ -1,25 +1,48 @@
 import axios from 'axios';
-import { store } from '../app/store';
+
+const baseURL = (typeof import.meta !== 'undefined' && import.meta.env)
+  ? (import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? '/api/v1' : 'http://localhost:3000/api/v1'))
+  : '/api/v1';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // always send cookies (guest_session, etc.)
 });
 
-api.interceptors.request.use((config) => {
-  // Get the token from the Redux store's state
-  const token = store.getState().auth.token;
+// Attach Authorization header if a JWT exists
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
-  // If a token exists, add it to the Authorization header
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Normalize error messages and preserve status
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      const message = error.response.data?.message || error.response.data?.error || 'An error occurred';
+      const err = new Error(message);
+      err.status = error.response.status;
+      return Promise.reject(err);
+    }
+    if (error.request) {
+      const err = new Error('Network error - please check your connection');
+      err.status = 0;
+      return Promise.reject(err);
+    }
+    const err = new Error('Request failed');
+    err.status = -1;
+    return Promise.reject(err);
   }
-
-  return config;
-}, (error) => {
-  return Promise.reject(error);
-});
+);
 
 export default api;

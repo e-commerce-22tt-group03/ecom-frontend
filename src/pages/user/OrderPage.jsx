@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchOrders, fetchOrderItems, clearOrderError } from '../features/orders/ordersSlice';
-import ProfileSidebar from '../features/profile/ProfileSidebar';
+import { fetchOrders, fetchOrderItems, clearOrderError } from '../../features/orders/ordersSlice';
+import ProfileSidebar from '../../features/profile/ProfileSidebar';
 
 const OrderPage = () => {
   const dispatch = useDispatch();

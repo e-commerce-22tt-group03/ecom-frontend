@@ -5,14 +5,13 @@ import ordersReducer from '../features/orders/ordersSlice'; // Updated to use me
 import usersReducer from '../features/users/usersSlice';
 import productsReducer from '../features/products/productsSlice';
 import pricingRulesReducer from '../features/pricingRules/pricingRulesSlice';
+import cartReducer from '../features/cart/cartSlice';
 
-// We will create and import these slices later
-// import authReducer from '../features/auth/authSlice';
-// import cartReducer from '../features/cart/cartSlice';
 export const store = configureStore({
     reducer: {
         products: productsReducer,
         orders: ordersReducer,
+        cart: cartReducer,
         auth: authReducer,
         users: usersReducer,
         profile: profileReducer,
