@@ -1,7 +1,7 @@
 // src/pages/CartPage.jsx
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
     ShoppingCart, 
     Trash2, 
@@ -29,6 +29,7 @@ import CartSummary from '../../features/cart/components/CartSummary';
 
 const CartPage = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     const items = useSelector(selectCartItems);
     const cartTotal = useSelector(selectCartTotal);
@@ -37,6 +38,7 @@ const CartPage = () => {
     const updatingItem = useSelector(selectUpdatingItem);
     const removingItem = useSelector(selectRemovingItem);
     const clearingCart = useSelector(selectClearingCart);
+    const isAuthenticated = useSelector(state => state.auth.isAuthenticated);
     
     const [showClearConfirm, setShowClearConfirm] = useState(false);
 
@@ -77,6 +79,15 @@ const CartPage = () => {
 
     const handleRefresh = () => {
         dispatch(fetchCart());
+    };
+
+    const handleProceedToCheckout = () => {
+        if (items.length === 0) return;
+        if (!isAuthenticated) {
+            navigate('/login?redirect=/checkout');
+            return;
+        }
+        navigate('/checkout');
     };
 
     if (loading && items.length === 0) {
@@ -228,6 +239,7 @@ const CartPage = () => {
                             items={items}
                             cartTotal={cartTotal}
                             loading={loading}
+                            onProceed={handleProceedToCheckout}
                         />
                     </div>
                 </div>

@@ -19,6 +19,8 @@ import ProductDetailPage from '../pages/products/ProductDetailPage';
 import OrderPage from "../pages/user/OrderPage";
 import ProfilePage from "../pages/user/ProfilePage";
 import CartPage from '../pages/cart/CartPage';
+import CheckoutPage from "../pages/checkout/CheckoutPage";
+import OrderConfirmationPage from "../pages/checkout/OrderConfirmationPage";
 
 const AppRoutes = () => {
     return (
@@ -29,6 +31,8 @@ const AppRoutes = () => {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/orders" element={<OrderPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage />} />
             <Route path="/about" element={<h2>About Page</h2>} />
             <Route path="/contact" element={<h2>Contact Page</h2>} />
             <Route path="/profile" element={<ProfilePage />} />

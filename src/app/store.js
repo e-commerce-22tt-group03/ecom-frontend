@@ -6,6 +6,8 @@ import usersReducer from '../features/users/usersSlice';
 import productsReducer from '../features/products/productsSlice';
 import pricingRulesReducer from '../features/pricingRules/pricingRulesSlice';
 import cartReducer from '../features/cart/cartSlice';
+import addressReducer from '../features/address/addressSlice';
+import checkoutReducer from '../features/checkout/checkoutSlice';
 
 export const store = configureStore({
     reducer: {
@@ -15,6 +17,8 @@ export const store = configureStore({
         auth: authReducer,
         users: usersReducer,
         profile: profileReducer,
-        pricingRules: pricingRulesReducer
+        pricingRules: pricingRulesReducer,
+        address: addressReducer,
+        checkout: checkoutReducer
     },
 });

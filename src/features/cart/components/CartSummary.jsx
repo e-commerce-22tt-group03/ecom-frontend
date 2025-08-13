@@ -2,7 +2,7 @@
 import { Link } from 'react-router-dom';
 import { ShoppingBag, CreditCard, Truck, Shield, ArrowRight } from 'lucide-react';
 
-const CartSummary = ({ items, cartTotal, loading }) => {
+const CartSummary = ({ items, cartTotal, loading, onProceed }) => {
     const itemCount = items.reduce((total, item) => total + item.quantity, 0);
     
     // Calculate savings
@@ -91,6 +91,7 @@ const CartSummary = ({ items, cartTotal, loading }) => {
                 <button 
                     className="btn btn-primary w-full mb-4"
                     disabled={loading || items.length === 0}
+                    onClick={onProceed}
                 >
                     {loading ? (
                         <span className="loading loading-spinner loading-sm mr-2"></span>
