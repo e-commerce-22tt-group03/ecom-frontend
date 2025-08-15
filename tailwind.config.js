@@ -6,16 +6,13 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {
-      colors: {
-        brand: 'rgb(189, 116, 76)'
-      }
-    },
+    extend: {},
   },
   plugins: [daisyui],
-  // daisyUI config (optional)
+  // daisyUI config - use built-in light theme first so it's the default
   daisyui: {
     themes: ["light", "dark", "cupcake", "bumblebee", "emerald", "synthwave"],
+    darkTheme: "dark",
   },
 }
 

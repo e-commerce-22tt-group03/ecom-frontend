@@ -62,18 +62,35 @@
 // Older version of Header components
 
 // src/components/layout/Header.jsx
-import { LogOut, Menu, Search, ShoppingCart, User } from 'lucide-react';
+import { LogOut, Menu, Search, ShoppingCart, User, Sun, Moon } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { logout } from '../../features/auth/authSlice';
+import React, { useEffect, useState } from 'react';
 
 const Header = () => {
   const dispatch = useDispatch();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const isAdmin = user?.role === 'Admin';
 
+  const [theme, setTheme] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('theme') || 'light' : 'light'));
+
+  useEffect(() => {
+    // Apply theme to document for global daisyUI tokens
+    try {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+    } catch (e) {
+      // ignore in SSR
+    }
+  }, [theme]);
+
   const handleLogout = () => {
     dispatch(logout());
+  };
+
+  const toggleTheme = () => {
+    setTheme((t) => (t === 'light' ? 'dark' : 'light'));
   };
 
   return (
@@ -115,6 +132,11 @@ const Header = () => {
             {/* <span className="badge badge-sm indicator-item">3</span> */}
           </div>
         </Link>
+
+        {/* Theme toggle button - uses daisyUI themes via data-theme on document */}
+        <button onClick={toggleTheme} className="btn btn-ghost btn-circle" aria-label="Toggle theme">
+          {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+        </button>
 
         {isAuthenticated ? (
           <div className="dropdown dropdown-end">

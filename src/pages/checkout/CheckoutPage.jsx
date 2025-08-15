@@ -5,8 +5,6 @@ import { fetchCart, selectCartItems, selectCartTotal } from '../../features/cart
 import { fetchAddresses, selectAddresses, selectDefaultAddressId, setDefaultAddress } from '../../features/address/addressSlice';
 import { placeOrder, selectCheckoutPlacing, selectLastOrderId, selectCheckoutError } from '../../features/checkout/checkoutSlice';
 
-const brandColor = 'rgb(189, 116, 76)';
-
 const CheckoutPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -58,22 +56,36 @@ const CheckoutPage = () => {
     dispatch(placeOrder({ shipping_address_id: selectedAddressId, payment_method: paymentMethod }));
   };
 
+  // Use stored theme for per-page data-theme attribute (falls back to 'light')
+  // const [theme, setTheme] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('theme') || 'light' : 'light'));
+
+  // // Keep theme in sync if user changes it elsewhere (storage event)
+  // useEffect(() => {
+  //   const handler = (e) => {
+  //     if (e.key === 'theme') setTheme(e.newValue || 'light');
+  //   };
+  //   window.addEventListener('storage', handler);
+  //   return () => window.removeEventListener('storage', handler);
+  // }, []);
+
   return (
+    // Set data-theme so this page respects daisyUI theme tokens
+    // <div data-theme={theme} className="min-h-screen bg-base-100 py-8"> // tempo off
     <div className="min-h-screen bg-base-100 py-8">
       <div className="max-w-5xl mx-auto px-4">
-        <h1 className="text-3xl font-bold mb-6" style={{ color: brandColor }}>Checkout</h1>
+        <h1 className="text-3xl font-bold mb-6 text-primary">Checkout</h1>
 
         {error && <div className="alert alert-error mb-4"><span>{error}</span></div>}
 
         <div className="grid md:grid-cols-3 gap-8">
           {/* Left: Address & Payment */}
           <div className="md:col-span-2 space-y-8">
-            <section className="p-6 rounded-lg shadow bg-white">
-              <h2 className="text-xl font-semibold mb-4" style={{ color: brandColor }}>Shipping Address</h2>
+            <section className="p-6 rounded-lg shadow bg-base-100">
+              <h2 className="text-xl font-semibold mb-4 text-primary">Shipping Address</h2>
               {addresses.length === 0 && <p className="text-sm text-gray-500">You have no addresses. Add one in profile page (future inline form).</p>}
               <div className="space-y-3">
                 {addresses.map(addr => (
-                  <label key={addr.address_id} className={`flex items-start gap-3 p-4 border rounded cursor-pointer ${selectedAddressId === addr.address_id ? 'border-[3px]' : ''}`} style={selectedAddressId === addr.address_id ? { borderColor: brandColor } : {}}>
+                  <label key={addr.address_id} className={`flex items-start gap-3 p-4 border rounded cursor-pointer ${selectedAddressId === addr.address_id ? 'border-[3px]' : ''}`} style={selectedAddressId === addr.address_id ? { borderColor: 'var(--p)' } : {}}>
                     <input
                       type="radio"
                       name="address"
@@ -83,8 +95,8 @@ const CheckoutPage = () => {
                     />
                     <div className="flex-1">
                       <p className="font-medium">{addr.address_line1}</p>
-                      <p className="text-sm text-gray-600">{addr.city}, {addr.country}</p>
-                      {addr.is_default && <span className="badge" style={{ backgroundColor: brandColor, borderColor: brandColor }}>Default</span>}
+                      <p className="text-sm text-base-content/70">{addr.city}, {addr.country}</p>
+                      {addr.is_default && <span className="badge badge-primary">Default</span>}
                     </div>
                     {(!addr.is_default) && (
                       <button type="button" className="text-xs underline" onClick={() => dispatch(setDefaultAddress(addr.address_id))}>Make Default</button>
@@ -94,8 +106,8 @@ const CheckoutPage = () => {
               </div>
             </section>
 
-            <section className="p-6 rounded-lg shadow bg-white">
-              <h2 className="text-xl font-semibold mb-4" style={{ color: brandColor }}>Payment Method</h2>
+            <section className="p-6 rounded-lg shadow bg-base-100">
+              <h2 className="text-xl font-semibold mb-4 text-primary">Payment Method</h2>
               <div className="space-y-3">
                 <label className="flex items-center gap-3 p-4 border rounded">
                   <input type="radio" name="payment" className="radio" value="COD" checked={paymentMethod === 'COD'} onChange={() => setPaymentMethod('COD')} />
@@ -122,8 +134,8 @@ const CheckoutPage = () => {
 
           {/* Right: Order Summary */}
           <div className="space-y-6">
-            <div className="p-6 rounded-lg shadow bg-white sticky top-4">
-              <h2 className="text-xl font-semibold mb-4" style={{ color: brandColor }}>Order Summary</h2>
+            <div className="p-6 rounded-lg shadow bg-base-100 sticky top-4">
+              <h2 className="text-xl font-semibold mb-4 text-primary">Order Summary</h2>
               <ul className="divide-y">
                 {cartItems.map(item => (
                   <li key={item.item_id || item.product_id} className="py-3 flex justify-between text-sm">
@@ -138,7 +150,7 @@ const CheckoutPage = () => {
               </div>
               <button
                 className="btn w-full mt-6 text-white"
-                style={{ backgroundColor: brandColor, borderColor: brandColor }}
+                style={{ backgroundColor: 'var(--p)', borderColor: 'var(--p)' }}
                 disabled={!selectedAddressId || placing === 'loading' || cartItems.length === 0}
                 onClick={handlePlaceOrder}
               >

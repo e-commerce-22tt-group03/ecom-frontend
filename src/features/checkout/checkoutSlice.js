@@ -35,6 +35,7 @@ const checkoutSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // Place order
       .addCase(placeOrder.pending, (state) => { state.placing = 'loading'; state.error = null; })
       .addCase(placeOrder.fulfilled, (state, action) => {
         state.placing = 'succeeded';
@@ -43,6 +44,7 @@ const checkoutSlice = createSlice({
       })
       .addCase(placeOrder.rejected, (state, action) => { state.placing = 'failed'; state.error = action.payload; })
 
+      // Fetch order detail
       .addCase(fetchOrderDetail.pending, (state) => { state.fetchingDetail = true; state.error = null; })
       .addCase(fetchOrderDetail.fulfilled, (state, action) => { state.fetchingDetail = false; state.lastOrderDetail = action.payload; })
       .addCase(fetchOrderDetail.rejected, (state, action) => { state.fetchingDetail = false; state.error = action.payload; });

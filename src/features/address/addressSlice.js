@@ -42,6 +42,7 @@ const addressSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
+      // Fetch addresses
       .addCase(fetchAddresses.pending, (state) => { state.status = 'loading'; state.error = null; })
       .addCase(fetchAddresses.fulfilled, (state, action) => {
         state.status = 'succeeded';
@@ -51,10 +52,12 @@ const addressSlice = createSlice({
       })
       .addCase(fetchAddresses.rejected, (state, action) => { state.status = 'failed'; state.error = action.payload; })
 
+      // Create address
       .addCase(createAddress.pending, (state) => { state.creating = true; state.error = null; })
       .addCase(createAddress.fulfilled, (state) => { state.creating = false; })
       .addCase(createAddress.rejected, (state, action) => { state.creating = false; state.error = action.payload; })
 
+      // Set default address
       .addCase(setDefaultAddress.pending, (state) => { state.settingDefault = true; state.error = null; })
       .addCase(setDefaultAddress.fulfilled, (state) => { state.settingDefault = false; })
       .addCase(setDefaultAddress.rejected, (state, action) => { state.settingDefault = false; state.error = action.payload; });
