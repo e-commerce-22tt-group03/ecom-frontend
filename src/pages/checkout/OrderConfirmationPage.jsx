@@ -9,9 +9,6 @@ const OrderConfirmationPage = () => {
   const order = useSelector(selectLastOrderDetail);
   const fetchingDetail = useSelector(state => state.checkout.fetchingDetail);
 
-  // page theme
-  const theme = typeof window !== 'undefined' ? localStorage.getItem('theme') || 'light' : 'light';
-
   useEffect(() => {
     if (!order || String(order.order_id) !== String(orderId) || !order.items) {
       dispatch(fetchOrderDetail(orderId));
@@ -27,8 +24,8 @@ const OrderConfirmationPage = () => {
   }
 
   return (
-    <div data-theme={theme} className="min-h-screen bg-base-100 py-12">
-      <div className="max-w-3xl mx-auto px-4">
+    <div className="min-h-screen bg-base-100">
+      <div className="container mx-auto px-4 py-12">
         <div className="p-8 rounded-lg shadow bg-base-100">
           <h1 className="text-3xl font-bold mb-4 text-primary">Thank you for your order!</h1>
           <p className="mb-6 text-sm text-base-content/70">Order <span className="font-mono font-semibold">#{order.order_id}</span> is currently <span className="font-semibold">{order.status}</span>.</p>

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { fetchCart, selectCartItems, selectCartTotal } from '../../features/cart/cartSlice';
-import { fetchAddresses, selectAddresses, selectDefaultAddressId, setDefaultAddress } from '../../features/address/addressSlice';
+import { fetchAddresses, selectAddresses, selectDefaultAddressId, setDefaultAddress, createAddress } from '../../features/address/addressSlice';
 import { placeOrder, selectCheckoutPlacing, selectLastOrderId, selectCheckoutError } from '../../features/checkout/checkoutSlice';
 
 const CheckoutPage = () => {
@@ -19,6 +19,15 @@ const CheckoutPage = () => {
 
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('COD');
+  // Inline create address form state
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newAddress, setNewAddress] = useState({
+    address_line1: '',
+    address_line2: '',
+    city: '',
+    postal_code: '',
+    country: ''
+  });
 
   // Redirect if not logged in
   useEffect(() => {
@@ -56,23 +65,36 @@ const CheckoutPage = () => {
     dispatch(placeOrder({ shipping_address_id: selectedAddressId, payment_method: paymentMethod }));
   };
 
-  // Use stored theme for per-page data-theme attribute (falls back to 'light')
-  // const [theme, setTheme] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('theme') || 'light' : 'light'));
+  const handleChangeNewAddress = (e) => {
+    const { name, value } = e.target;
+    setNewAddress((s) => ({ ...s, [name]: value }));
+  };
 
-  // // Keep theme in sync if user changes it elsewhere (storage event)
-  // useEffect(() => {
-  //   const handler = (e) => {
-  //     if (e.key === 'theme') setTheme(e.newValue || 'light');
-  //   };
-  //   window.addEventListener('storage', handler);
-  //   return () => window.removeEventListener('storage', handler);
-  // }, []);
+  const handleCreateAddress = async (e) => {
+    e.preventDefault();
+    try {
+      const created = await dispatch(createAddress(newAddress)).unwrap();
+      // If API returned the created address row, select it. Otherwise refetch addresses and pick default/newest.
+      if (created && created.address_id) {
+        setSelectedAddressId(created.address_id);
+      } else {
+        // fallback: refetch addresses and pick default or last
+        const res = await dispatch(fetchAddresses()).unwrap();
+        const def = res.find(a => a.is_default) || res[res.length - 1];
+        if (def) setSelectedAddressId(def.address_id);
+      }
+      setShowAddForm(false);
+      setNewAddress({ address_line1: '', address_line2: '', city: '', postal_code: '', country: '' });
+    } catch (err) {
+      console.error('Failed to create address', err);
+      // You can show UI error here later
+    }
+  };
 
   return (
-    // Set data-theme so this page respects daisyUI theme tokens
-    // <div data-theme={theme} className="min-h-screen bg-base-100 py-8"> // tempo off
-    <div className="min-h-screen bg-base-100 py-8">
-      <div className="max-w-5xl mx-auto px-4">
+    // Do NOT set data-theme here; inherit global document data-theme
+    <div className="min-h-screen bg-base-100">
+      <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6 text-primary">Checkout</h1>
 
         {error && <div className="alert alert-error mb-4"><span>{error}</span></div>}
@@ -81,8 +103,33 @@ const CheckoutPage = () => {
           {/* Left: Address & Payment */}
           <div className="md:col-span-2 space-y-8">
             <section className="p-6 rounded-lg shadow bg-base-100">
-              <h2 className="text-xl font-semibold mb-4 text-primary">Shipping Address</h2>
-              {addresses.length === 0 && <p className="text-sm text-gray-500">You have no addresses. Add one in profile page (future inline form).</p>}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-primary">Shipping Address</h2>
+                <div className="flex items-center gap-2">
+                  <button type="button" className="btn btn-sm btn-outline" onClick={() => setShowAddForm(v => !v)}>
+                    {showAddForm ? 'Cancel' : 'Add New Address'}
+                  </button>
+                </div>
+              </div>
+
+              {showAddForm && (
+                <form onSubmit={handleCreateAddress} className="space-y-3 mb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input name="address_line1" value={newAddress.address_line1} onChange={handleChangeNewAddress} required placeholder="Address line 1" className="input input-bordered w-full" />
+                    <input name="address_line2" value={newAddress.address_line2} onChange={handleChangeNewAddress} placeholder="Address line 2" className="input input-bordered w-full" />
+                    <input name="city" value={newAddress.city} onChange={handleChangeNewAddress} required placeholder="City" className="input input-bordered w-full" />
+                    <input name="postal_code" value={newAddress.postal_code} onChange={handleChangeNewAddress} placeholder="Postal Code" className="input input-bordered w-full" />
+                    <input name="country" value={newAddress.country} onChange={handleChangeNewAddress} required placeholder="Country" className="input input-bordered w-full" />
+                  </div>
+                  <div className="flex gap-2">
+                    <button type="submit" className="btn btn-primary btn-sm">Save Address</button>
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowAddForm(false)}>Cancel</button>
+                  </div>
+                </form>
+              )}
+
+              {addresses.length === 0 && !showAddForm && <p className="text-sm text-base-content/60">You have no addresses. Click "Add New Address" to create one.</p>}
+
               <div className="space-y-3">
                 {addresses.map(addr => (
                   <label key={addr.address_id} className={`flex items-start gap-3 p-4 border rounded cursor-pointer ${selectedAddressId === addr.address_id ? 'border-[3px]' : ''}`} style={selectedAddressId === addr.address_id ? { borderColor: 'var(--p)' } : {}}>
@@ -124,8 +171,11 @@ const CheckoutPage = () => {
                 </label>
                 <label className="flex items-center gap-3 p-4 border rounded opacity-50 cursor-not-allowed">
                   <input type="radio" name="payment" className="radio" disabled />
-                  <div>
-                    <p className="font-medium">VNPAY (Coming Soon)</p>
+                  <div className="flex items-center gap-3">
+                    <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-VNPAY-QR-1.png" alt="VNPAY" className="w-24 h-16 object-contain" />
+                    <div>
+                      <p className="font-medium"> (Coming Soon)</p>
+                    </div>
                   </div>
                 </label>
               </div>
@@ -140,17 +190,16 @@ const CheckoutPage = () => {
                 {cartItems.map(item => (
                   <li key={item.item_id || item.product_id} className="py-3 flex justify-between text-sm">
                     <span>{item.product_name} x {item.quantity}</span>
-                    <span>{(item.final_price || item.price || 0) * item.quantity}</span>
+                    <span>{(item.final_price || item.price || 0) * item.quantity} $</span>
                   </li>
                 ))}
               </ul>
               <div className="mt-4 flex justify-between font-semibold">
                 <span>Total</span>
-                <span>{cartTotal}</span>
+                <span>{cartTotal} $</span>
               </div>
               <button
-                className="btn w-full mt-6 text-white"
-                style={{ backgroundColor: 'var(--p)', borderColor: 'var(--p)' }}
+                className="btn btn-primary w-full mt-6"
                 disabled={!selectedAddressId || placing === 'loading' || cartItems.length === 0}
                 onClick={handlePlaceOrder}
               >
