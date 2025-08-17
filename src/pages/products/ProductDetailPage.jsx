@@ -696,8 +696,9 @@ const ProductDetailPage = () => {
                                         basePrice: product.base_price,
                                         dynamicPrice: product.dynamicPrice,
                                         condition: product.condition,
-                                        stockQuantity: product.stock_quantity,
-                                        averageRating: product.average_rating,
+                                        stockQuantity: product.stockQuantity,
+                                        averageRating: product.averageRating,
+                                        totalSold: product.totalSold,
                                     }}
                                 />
                             ))}
