@@ -6,6 +6,7 @@ import usersReducer from '../features/users/usersSlice';
 import productsReducer from '../features/products/productsSlice';
 import pricingRulesReducer from '../features/pricingRules/pricingRulesSlice';
 import cartReducer from '../features/cart/cartSlice';
+import dashboardReducer from '../features/dashboard/dashboardSlice';
 
 export const store = configureStore({
     reducer: {
@@ -15,6 +16,7 @@ export const store = configureStore({
         auth: authReducer,
         users: usersReducer,
         profile: profileReducer,
-        pricingRules: pricingRulesReducer
+        pricingRules: pricingRulesReducer,
+        dashboard: dashboardReducer,
     },
 });
