@@ -12,6 +12,8 @@ import ManageOrdersPage from "../pages/admin/ManageOrdersPage";
 import ManageProductsPage from "../pages/admin/ManageProductsPage";
 import ManageUsersPage from "../pages/admin/ManageUsersPage";
 import OrderDetailsPage from "../pages/admin/OrderDetailsPage";
+import ManageCategoriesPage from '../pages/admin/ManageCategoriesPage';
+import ManageProductCategoriesPage from '../pages/admin/ManageProductCategoriesPage';
 import LoginPage from '../pages/auth/LoginPage';
 import ManagePricingRulesPage from '../pages/admin/ManagePricingRulesPage';
 import RegisterPage from '../pages/auth/RegisterPage';
@@ -34,7 +36,7 @@ const AppRoutes = () => {
             <Route path="/profile" element={<ProfilePage />} />
             {/* Product Detail Route */}
             <Route path="/products/:id" element={<ProductDetailPage />} />
-            
+
             {/* Cart Route */}
             <Route path="/cart" element={<CartPage />} />
 
@@ -48,6 +50,8 @@ const AppRoutes = () => {
                 <Route path="/admin/products" element={<ManageProductsPage />} />
                 <Route path="/admin/products/add" element={<AddProductPage />} />
                 <Route path="/admin/products/edit/:productId" element={<EditProductPage />} />
+                <Route path="/admin/products/categories/:productId" element={<ManageProductCategoriesPage />} />
+                <Route path="/admin/categories" element={<ManageCategoriesPage />} />
                 <Route path="/admin/orders" element={<ManageOrdersPage />} />
                 <Route path="/admin/orders/:orderId" element={<OrderDetailsPage />} />
                 <Route path="/admin/users" element={<ManageUsersPage />} />

@@ -1,7 +1,13 @@
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Tag } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const AdminProductTable = ({ products, onEdit, onDelete }) => {
-  console.log("AdminProductTable products:", products);
+  const navigate = useNavigate();
+
+  const handleAssignCategories = (productId) => {
+    navigate(`/admin/products/categories/${productId}`);
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="table w-full">
@@ -43,6 +49,9 @@ const AdminProductTable = ({ products, onEdit, onDelete }) => {
                 <div className="flex gap-2">
                   <button onClick={() => onEdit(product.productId)} className="btn btn-ghost btn-xs">
                     <Edit className="w-4 h-4" /> Edit
+                  </button>
+                  <button onClick={() => handleAssignCategories(product.productId)} className="btn btn-ghost btn-xs">
+                    <Tag className="w-4 h-4" /> Categories
                   </button>
                   <button onClick={() => onDelete(product.productId)} className="btn btn-ghost btn-xs text-error">
                     <Trash2 className="w-4 h-4" /> Delete

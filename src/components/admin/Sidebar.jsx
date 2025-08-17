@@ -1,4 +1,4 @@
-import { LayoutDashboard, Settings, ShoppingCart, Users } from 'lucide-react';
+import { LayoutDashboard, Settings, ShoppingCart, Users, Tag } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 const Sidebar = () => {
@@ -18,6 +18,12 @@ const Sidebar = () => {
           <NavLink to="/admin/products" className={getLinkClass}>
             <ShoppingCart className="w-5 h-5 mr-3" />
             Manage Products
+          </NavLink>
+        </li>
+        <li>
+          <NavLink to="/admin/categories" className={getLinkClass}>
+            <Tag className="w-5 h-5 mr-3" />
+            Manage Categories
           </NavLink>
         </li>
         <li>
