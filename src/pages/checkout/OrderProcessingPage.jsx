@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { confirmPayment as confirmPaymentApi } from '../../api/vnpayApi';
 
@@ -15,9 +15,12 @@ const OrderProcessingPage = () => {
   const navigate = useNavigate();
   const [status, setStatus] = useState('processing');
   const [message, setMessage] = useState('Processing payment...');
+  const calledRef = useRef(false);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
-    let cancelled = false;
+  // mark mounted at the start of this effect
+  isMountedRef.current = true;
 
     const run = async () => {
       const params = parseQuery(location.search);
@@ -46,32 +49,52 @@ const OrderProcessingPage = () => {
       if (vnpResponse !== '00' && params.vnp_TransactionStatus !== '00') {
         setStatus('failed');
         setMessage('Payment failed or cancelled.');
-        if (!cancelled) navigate(`/checkout/reject?orderId=${orderId}&code=${vnpResponse || params.vnp_TransactionStatus}`);
+        if (isMountedRef.current) navigate(`/checkout/reject?orderId=${orderId}&code=${vnpResponse || params.vnp_TransactionStatus}`);
         return;
       }
 
+      // Defensive: ensure numeric values are valid positive numbers before calling backend
+  if (!Number.isFinite(txnNo) || txnNo <= 0 || !Number.isFinite(payDate) || payDate <= 0) {
+        // Log helpful debug info so we can inspect what the FE received from VNPAY
+        // (NaN becomes null in JSON, which triggers BE zod validation -> 400)
+        // Do not call backend when required numeric params are invalid.
+        // Navigate user to reject page with an explanatory code.
+        // Also avoid double-calling the confirm endpoint in StrictMode.
+        console.warn('Invalid VNPAY params, skipping confirm call', { orderId, txnNo, payDate, params });
+        setStatus('failed');
+        setMessage('Invalid payment parameters received from gateway.');
+  if (isMountedRef.current) navigate(`/checkout/reject?orderId=${orderId}&code=invalid_params`);
+        return;
+      }
+
+      // Prevent duplicate confirmation calls (React StrictMode/dev double-run)
+      if (calledRef.current) return;
+      calledRef.current = true;
+
       try {
-        const res = await confirmPaymentApi({ order_id: orderId, transaction_no: txnNo, pay_date: payDate });
+        const payload = { order_id: orderId, transaction_no: txnNo, pay_date: payDate };
+        console.log('confirmPaymentApi payload:', payload);
+        const res = await confirmPaymentApi(payload);
         console.log('confirmPaymentApi response:', res);
         if (res?.status === 'success') {
           setStatus('success');
           setMessage('Payment confirmed. Redirecting to confirmation...');
-          if (!cancelled) navigate(`/order-confirmation/${orderId}`);
-        } else {
+          if (isMountedRef.current) navigate(`/order-confirmation/${orderId}`);
+    } else {
           setStatus('failed');
           setMessage(res?.message || 'Payment confirmation failed.');
-          if (!cancelled) navigate(`/checkout/reject?orderId=${orderId}&code=confirm_failed`);
+          if (isMountedRef.current) navigate(`/checkout/reject?orderId=${orderId}&code=confirm_failed`);
         }
       } catch (err) {
         setStatus('error');
         setMessage(err?.message || 'Confirmation request failed');
-        if (!cancelled) navigate(`/checkout/reject?orderId=${orderId}&code=network_error`);
-      }
+        if (isMountedRef.current) navigate(`/checkout/reject?orderId=${orderId}&code=network_error`);
+    }
     };
 
     run();
 
-    return () => { cancelled = true; };
+    return () => { isMountedRef.current = false; };
   }, [location.search, navigate]);
 
   return (
