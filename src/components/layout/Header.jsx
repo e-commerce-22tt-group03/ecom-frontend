@@ -1,4 +1,4 @@
-import { LogOut, Menu, Search, ShoppingCart, User, Sun, Moon } from 'lucide-react';
+import { LogOut, Menu, ShoppingCart, User, Sun, Moon } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { logout } from '../../features/auth/authSlice';
@@ -9,6 +9,9 @@ const Header = () => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const isAdmin = user?.role === 'Admin';
 
+  // count items in cart (sum of quantities)
+  const cartItemsCount = useSelector((state) => state.cart?.items?.reduce((s, it) => s + (it.quantity || 0), 0) || 0);
+
   const [theme, setTheme] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('theme') || 'light' : 'light'));
 
   useEffect(() => {
@@ -16,7 +19,7 @@ const Header = () => {
     try {
       document.documentElement.setAttribute('data-theme', theme);
       localStorage.setItem('theme', theme);
-    } catch (e) {
+    } catch {
       // ignore in SSR
     }
   }, [theme]);
@@ -38,8 +41,6 @@ const Header = () => {
           </div>
           <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
             <li><Link to="/products">Products</Link></li>
-            <li><Link to="/categories">Categories</Link></li>
-            <li><Link to="/about">About</Link></li>
           </ul>
         </div>
         <Link to="/" className="btn btn-ghost text-xl font-bold text-primary">
@@ -50,22 +51,14 @@ const Header = () => {
       <div className="navbar-center hidden lg:flex">
         <ul className="menu menu-horizontal px-1">
           <li><Link to="/products">Products</Link></li>
-          <li><Link to="/categories">Categories</Link></li>
-          <li><Link to="/about">About</Link></li>
         </ul>
       </div>
 
       <div className="navbar-end gap-2">
-        <div className="form-control">
-          <input type="text" placeholder="Search flowers..." className="input input-bordered w-24 md:w-auto" />
-        </div>
-        <button className="btn btn-ghost btn-circle">
-          <Search className="w-5 h-5" />
-        </button>
         <Link to="/cart" className="btn btn-ghost btn-circle">
           <div className="indicator">
             <ShoppingCart className="w-5 h-5" />
-            {/* <span className="badge badge-sm indicator-item">3</span> */}
+            {cartItemsCount > 0 && <span className="badge badge-sm badge-error indicator-item">{cartItemsCount}</span>}
           </div>
         </Link>
 
