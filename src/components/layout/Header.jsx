@@ -132,6 +132,7 @@ const Header = () => {
               {isAdmin && <li><Link to="/admin/dashboard">Admin Dashboard</Link></li>}
               {!isAdmin && <li><Link to="/profile">Profile</Link></li>}
               {!isAdmin && <li><Link to="/orders">My Orders</Link></li>}
+              {!isAdmin && <li><Link to="/address">My Address</Link></li>}
               <li><button onClick={handleLogout} className="flex items-center gap-2">
                 <LogOut className="w-4 h-4" />
                 Logout

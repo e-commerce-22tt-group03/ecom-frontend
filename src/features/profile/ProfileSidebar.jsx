@@ -18,6 +18,12 @@ const ProfileSidebar = () => {
         >
           My Orders
         </Link>
+        <Link
+          to="/address"
+          className={`btn btn-ghost justify-start text-left w-full transition-colors duration-150 ${location.pathname === '/address' ? 'text-primary font-bold' : ''}`}
+        >
+          My Address
+        </Link>
       </nav>
     </aside>
   );
