@@ -55,13 +55,6 @@ const CheckoutPage = () => {
     }
   }, [cartItems, navigate, lastOrderId]);
 
-  useEffect(() => {
-    // Only auto-navigate to order confirmation for non-VNPAY flows (e.g., COD).
-    if (lastOrderId && paymentMethod !== 'VNPAY') {
-      navigate(`/order-confirmation/${lastOrderId}`);
-    }
-  }, [lastOrderId, navigate, paymentMethod]);
-
   const handlePlaceOrder = async () => {
     if (!selectedAddressId) return;
     try {
@@ -84,7 +77,15 @@ const CheckoutPage = () => {
         window.location.assign(paymentUrl);
         return;
       }
-      // otherwise (COD) the lastOrderId effect will navigate to confirmation
+
+      // For non-VNPAY flows (e.g., COD), navigate directly to the order confirmation page
+      if (orderId && paymentMethod !== 'VNPAY') {
+        navigate(`/order-confirmation/${orderId}`);
+      } else {
+        // fallback: if orderId missing, navigate to orders list
+        navigate('/orders');
+        
+      }
     } catch (err) {
       console.error('Place order failed', err);
       alert(err?.message || 'Failed to place order.');

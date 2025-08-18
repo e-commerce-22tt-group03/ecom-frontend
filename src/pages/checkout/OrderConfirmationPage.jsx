@@ -46,7 +46,7 @@ const OrderConfirmationPage = () => {
             </div>
 
           <div className="space-x-4">
-              <Link to="/" className="btn btn-primary">Continue Shopping</Link>
+              <Link to="/products" className="btn btn-primary">Continue Shopping</Link>
               <Link to="/orders" className="btn btn-outline">View My Orders</Link>
             </div>
         </div>
