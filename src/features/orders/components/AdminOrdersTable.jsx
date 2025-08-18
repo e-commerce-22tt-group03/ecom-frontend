@@ -6,6 +6,7 @@ const AdminOrdersTable = ({ orders }) => {
 
   const getStatusBadgeClass = (status) => {
     switch (status) {
+      case 'Pending': return 'badge-warning';
       case 'Processing': return 'badge-info';
       case 'Delivering': return 'badge-primary';
       case 'Completed': return 'badge-success';

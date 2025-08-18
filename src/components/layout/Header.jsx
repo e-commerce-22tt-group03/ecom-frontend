@@ -130,9 +130,9 @@ const Header = () => {
                 <span>{user?.full_name || user?.email}</span>
               </li>
               {isAdmin && <li><Link to="/admin/dashboard">Admin Dashboard</Link></li>}
-              {!isAdmin && <li><Link to="/profile">Profile</Link></li>}
-              {!isAdmin && <li><Link to="/orders">My Orders</Link></li>}
-              {!isAdmin && <li><Link to="/address">My Address</Link></li>}
+              <li><Link to="/profile">Profile</Link></li>
+              <li><Link to="/orders">My Orders</Link></li>
+              <li><Link to="/address">My Address</Link></li>
               <li><button onClick={handleLogout} className="flex items-center gap-2">
                 <LogOut className="w-4 h-4" />
                 Logout
