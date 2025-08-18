@@ -58,3 +58,51 @@ export const deleteProduct = async (productId) => {
     throw error.response?.data?.message || 'Failed to delete the product.';
   }
 };
+
+/**
+ * Fetches product recommendations for a given product ID.
+ * @param {string} productId - The ID of the product.
+ * @param {object} params - Optional query parameters like { limit: 10 }.
+ * @returns {Promise<object>} The list of recommended products.
+ */
+export const fetchRecommendations = async (productId, params = {}) => {
+  try {
+    const response = await api.get(`/products/${productId}/recommendations`, { params });
+    return response.data.data;
+  } catch (error) {
+    throw error.response?.data?.message || 'Failed to fetch recommendations.';
+  }
+};
+
+/**
+ * Adds a new review for a product.
+ * @param {string} productId - The ID of the product to review.
+ * @param {object} reviewData - The review data (rating, comment).
+ * @returns {Promise<object>} The newly created review.
+ */
+export const addReview = async (productId, reviewData) => {
+  try {
+    const response = await api.post(`/products/${productId}/reviews`, reviewData);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data?.message || 'Failed to add the review.';
+  }
+};
+
+/**
+ * Checks if the current user can review a product.
+ * @param {string} productId - The ID of the product.
+ * @returns {Promise<object>} An object with a boolean `canReview` property.
+ */
+export const checkCanReview = async (productId) => {
+  try {
+    const response = await api.get(`/products/${productId}/reviews/can-review`);
+    return response.data;
+  } catch (error) {
+    // If the user is not logged in, the API will likely return a 401, which we can interpret as cannot review.
+    if (error.response?.status === 401) {
+      return { canReview: false };
+    }
+    throw error.response?.data?.message || 'Failed to check review eligibility.';
+  }
+};

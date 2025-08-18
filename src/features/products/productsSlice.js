@@ -3,7 +3,10 @@ import {
     addProduct as addProductApi,
     deleteProduct as deleteProductApi,
     fetchProducts as fetchProductsApi,
-    updateProduct as updateProductApi
+    updateProduct as updateProductApi,
+    fetchRecommendations as fetchRecommendationsApi,
+    addReview as addReviewApi,
+    checkCanReview as checkCanReviewApi
 } from '../../api/productApi'; // Admin CMS API calls
 
 // API Base URL - temporarily
@@ -96,7 +99,7 @@ export const fetchProductsForListing = createAsyncThunk(
             }
 
             const data = await response.json();
-            
+
             // Handle the new API response structure
             if (data.status === 'success') {
                 return {
@@ -124,7 +127,7 @@ export const fetchProductById = createAsyncThunk(
     async (productId, { rejectWithValue }) => {
         try {
             const response = await fetch(`${API_BASE_URL}/products/${productId}`);
-            
+
             if (!response.ok) {
                 if (response.status === 404) {
                     throw new Error('Product not found');
@@ -133,7 +136,7 @@ export const fetchProductById = createAsyncThunk(
             }
 
             const data = await response.json();
-            
+
             // Handle the new API response structure
             if (data.status === 'success' && data.data && data.data.product) {
                 return data.data.product;
@@ -153,13 +156,13 @@ export const fetchCategories = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const response = await fetch(`${API_BASE_URL}/categories`);
-            
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const data = await response.json();
-            
+
             // Handle the API response structure
             if (data.status === 'success' && data.data) {
                 return data.data;
@@ -184,18 +187,54 @@ export const fetchSuggestions = createAsyncThunk(
             });
 
             const response = await fetch(`${API_BASE_URL}/suggestions?${queryParams}`);
-            
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const data = await response.json();
-            
+
             // Handle the API response structure
             return data.products || [];
 
         } catch (error) {
             return rejectWithValue(error.message);
+        }
+    }
+);
+
+export const fetchRecommendations = createAsyncThunk(
+    'products/fetchRecommendations',
+    async ({ productId, limit }, { rejectWithValue }) => {
+        try {
+            const data = await fetchRecommendationsApi(productId, { limit });
+            return data.recommendations;
+        } catch (error) {
+            return rejectWithValue(error.toString());
+        }
+    }
+);
+
+export const addReview = createAsyncThunk(
+    'products/addReview',
+    async ({ productId, reviewData }, { rejectWithValue }) => {
+        try {
+            const data = await addReviewApi(productId, reviewData);
+            return data.review;
+        } catch (error) {
+            return rejectWithValue(error.toString());
+        }
+    }
+);
+
+export const checkCanReview = createAsyncThunk(
+    'products/checkCanReview',
+    async (productId, { rejectWithValue }) => {
+        try {
+            const data = await checkCanReviewApi(productId);
+            return data.canReview;
+        } catch (error) {
+            return rejectWithValue(error.toString());
         }
     }
 );
@@ -220,46 +259,52 @@ const productsSlice = createSlice({
         totalPages: 1,
         hasNextPage: false,
         hasPreviousPage: false,
-        
+
         // Categories
         categories: {
             flower_type: [],
             occasion: []
         },
-        
+
         // Current product (for product detail page)
         currentProduct: null,
-        
+        recommendations: [],
+        recommendationsLoading: false,
+        recommendationsError: null,
+        canReview: false,
+        reviewLoading: false,
+        reviewError: null,
+
         // Suggestions
         suggestions: [],
-        
+
         // Loading states
         loading: false,
         productLoading: false,
         categoriesLoading: false,
         suggestionsLoading: false,
-        
+
         // Error states
         error: null,
         productError: null,
         categoriesError: null,
         suggestionsError: null,
-        
+
         // UI states
         viewMode: 'grid',
         showFilters: false,
-        
+
         // (Thinh code) Filters for product listing
         publicFilters: {
             q: '',                                  // Search term
             minPrice: null,                         // Minimum price
             maxPrice: null,                         // Maximum price
             condition: '',                          // 'New Flower', 'Old Flower', 
-                                                    // 'Low Stock'
+            // 'Low Stock'
             categoryIds: '',                        // Comma-separated category IDs
             sortBy: 'best_selling',                 // 'sortBy' options: 'price_asc',
-                                                    // 'price_desc', 'name_asc', 'name_desc',
-                                                    // 'newest', 'best_selling'
+            // 'price_desc', 'name_asc', 'name_desc',
+            // 'newest', 'best_selling'
             page: 1,
             limit: 24
         }
@@ -267,7 +312,7 @@ const productsSlice = createSlice({
     reducers: {
         // ===== ADMIN CMS FUNCTIONS (NhanBin code) =====
         setSearchTerm: (state, action) => {
-        state.filters.searchTerm = action.payload;
+            state.filters.searchTerm = action.payload;
         },
         setCategoryFilter: (state, action) => {
             state.filters.category = action.payload;
@@ -315,7 +360,7 @@ const productsSlice = createSlice({
             state.publicFilters.limit = action.payload;
             state.publicFilters.page = 1;
         },
-        
+
         // UI actions
         setViewMode: (state, action) => {
             state.viewMode = action.payload;
@@ -323,7 +368,7 @@ const productsSlice = createSlice({
         setShowFilters: (state, action) => {
             state.showFilters = action.payload;
         },
-        
+
         // Clear actions
         clearPublicFilters: (state) => {
             state.publicFilters = {
@@ -349,7 +394,11 @@ const productsSlice = createSlice({
         clearCurrentProduct: (state) => {
             state.currentProduct = null;
             state.productError = null;
-        }
+        },
+        clearRecommendations: (state) => {
+            state.recommendations = [];
+            state.recommendationsError = null;
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -410,7 +459,7 @@ const productsSlice = createSlice({
             .addCase(fetchProductsForListing.fulfilled, (state, action) => {
                 state.loading = false;
                 state.items = action.payload.products;
-                
+
                 // Update pagination
                 const pagination = action.payload.pagination;
                 state.totalProducts = pagination.totalItems;
@@ -436,7 +485,7 @@ const productsSlice = createSlice({
                 state.productLoading = false;
                 state.productError = action.payload;
             })
-            
+
             // Fetch categories
             .addCase(fetchCategories.pending, (state) => {
                 state.categoriesLoading = true;
@@ -450,7 +499,7 @@ const productsSlice = createSlice({
                 state.categoriesLoading = false;
                 state.categoriesError = action.payload;
             })
-            
+
             // Fetch suggestions
             .addCase(fetchSuggestions.pending, (state) => {
                 state.suggestionsLoading = true;
@@ -463,13 +512,75 @@ const productsSlice = createSlice({
             .addCase(fetchSuggestions.rejected, (state, action) => {
                 state.suggestionsLoading = false;
                 state.suggestionsError = action.payload;
+            })
+
+            // Fetch recommendations
+            .addCase(fetchRecommendations.pending, (state) => {
+                state.recommendationsLoading = true;
+                state.recommendationsError = null;
+            })
+            .addCase(fetchRecommendations.fulfilled, (state, action) => {
+                state.recommendationsLoading = false;
+                state.recommendations = action.payload;
+            })
+            .addCase(fetchRecommendations.rejected, (state, action) => {
+                state.recommendationsLoading = false;
+                state.recommendationsError = action.payload;
+            })
+
+            // Check can review
+            .addCase(checkCanReview.pending, (state) => {
+                state.reviewLoading = true;
+            })
+            .addCase(checkCanReview.fulfilled, (state, action) => {
+                state.reviewLoading = false;
+                state.canReview = action.payload;
+            })
+            .addCase(checkCanReview.rejected, (state, action) => {
+                state.reviewLoading = false;
+                state.reviewError = action.payload;
+                state.canReview = false;
+            })
+
+            // Add review
+            .addCase(addReview.pending, (state) => {
+                state.reviewLoading = true;
+                state.reviewError = null;
+            })
+            .addCase(addReview.fulfilled, (state, action) => {
+                state.reviewLoading = false;
+                if (state.currentProduct) {
+                    state.currentProduct.reviews.unshift({
+                        reviewId: action.payload.review_id,
+                        user: {
+                            name: action.payload.full_name
+                        },
+                        rating: action.payload.rating,
+                        comment: action.payload.comment,
+                        createdAt: action.payload.created_at
+                    });
+                    state.currentProduct.averageRating = state.currentProduct.reviews.reduce(
+                        (sum, review) => sum + review.rating, 0
+                    ) / state.currentProduct.reviews.length;
+                }
+                state.canReview = false; // User has now submitted a review
+            })
+            .addCase(addReview.rejected, (state, action) => {
+                state.reviewLoading = false;
+                state.reviewError = action.payload;
             });
+
     }
 });
 
 // Selectors
 export const selectAllProducts = (state) => state.products.items;
 export const selectCurrentProduct = (state) => state.products.currentProduct;
+export const selectRecommendations = (state) => state.products.recommendations;
+export const selectRecommendationsLoading = (state) => state.products.recommendationsLoading;
+export const selectCanReview = (state) => state.products.canReview;
+export const selectReviewLoading = (state) => state.products.reviewLoading;
+export const selectReviewError = (state) => state.products.reviewError;
 export const selectProductsLoading = (state) => state.products.loading;
 export const selectProductLoading = (state) => state.products.productLoading;
 export const selectProductsError = (state) => state.products.error;
@@ -491,18 +602,18 @@ export const selectPagination = (state) => ({
 
 export const selectPublicFilters = (state) => state.products.publicFilters;
 
-export const { 
+export const {
     // ADMIN CMS specific (NhanBin code)
-    setSearchTerm, 
-    setCategoryFilter, 
-    setPriceRange, 
+    setSearchTerm,
+    setCategoryFilter,
+    setPriceRange,
     clearFilters,
 
     // Product listing (Thinh code)
-    setPublicSearchTerm, 
-    setPublicPriceRange, 
+    setPublicSearchTerm,
+    setPublicPriceRange,
     setConditionFilter,
-    setPublicCategoryFilter, 
+    setPublicCategoryFilter,
     setSortBy,
     setPage,
     setLimit,
@@ -512,7 +623,8 @@ export const {
     clearSuggestions,
     clearError,
     clearProductError,
-    clearCurrentProduct
+    clearCurrentProduct,
+    clearRecommendations
 } = productsSlice.actions;
 
 export default productsSlice.reducer;

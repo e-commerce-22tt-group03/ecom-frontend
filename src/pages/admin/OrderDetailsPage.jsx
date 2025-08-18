@@ -138,6 +138,7 @@ const OrderDetailsPage = () => {
                 onChange={handleStatusChange}
                 disabled={loading} // Disable dropdown while an update is in progress
               >
+                <option>Pending</option>
                 <option>Processing</option>
                 <option>Delivering</option>
                 <option>Completed</option>
