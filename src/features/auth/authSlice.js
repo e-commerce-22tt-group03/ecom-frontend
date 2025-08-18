@@ -135,6 +135,8 @@ const authSlice = createSlice({
       // Clear localStorage
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
+      // Redirect to homepage
+      window.location.replace('/');
     },
     clearError: (state) => {
       state.error = null;

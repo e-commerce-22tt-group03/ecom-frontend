@@ -86,7 +86,6 @@ const ProfilePage = () => {
             <div className="mb-10 flex flex-col items-start">
               <h2 className="text-lg font-semibold text-base-content">Profile</h2>
             </div>
-            {loading && <div>Loading...</div>}
             {error && <div className="alert alert-error mb-4">{error}</div>}
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Full Name */}
