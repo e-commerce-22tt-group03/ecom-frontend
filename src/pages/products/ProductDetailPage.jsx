@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { 
-    ShoppingCart, 
-    Heart, 
-    ArrowLeft, 
+import {
+    ShoppingCart,
+    Heart,
+    ArrowLeft,
     Star,
     Minus,
     Plus,
@@ -13,29 +13,86 @@ import {
     Shield,
     RotateCcw,
 } from 'lucide-react';
-import{
+import {
     fetchProductById,
     clearCurrentProduct,
     // clearProductError,
     selectCurrentProduct,
     selectProductLoading,
-    selectProductError
+    selectProductError,
+    selectRecommendations,
+    selectRecommendationsLoading,
+    fetchRecommendations,
+    clearRecommendations,
+    selectCanReview,
+    selectReviewLoading,
+    selectReviewError,
+    checkCanReview,
+    addReview
 } from '../../features/products/productsSlice';
 import {
     addToCart,
     selectAddingToCart,
 } from '../../features/cart/cartSlice';
+import ProductCard from '../../features/products/components/ProductCard';
+
+const ReviewForm = ({ loading, error, onSubmit }) => {
+    const [rating, setRating] = useState(5);
+    const [comment, setComment] = useState('');
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!comment.trim()) {
+            alert('Please enter a comment.');
+            return;
+        }
+        onSubmit({ rating, comment });
+        setComment('');
+        setRating(5);
+    };
+
+    return (
+        <div className="mt-8">
+            <h3 className="text-xl font-semibold mb-4">Write a Review</h3>
+            <form onSubmit={handleSubmit} className="card bg-base-200 p-6">
+                <div className="rating rating-lg mb-4">
+                    {[...Array(5)].map((_, i) => (
+                        <input
+                            key={i}
+                            type="radio"
+                            name="rating-2"
+                            className="mask mask-star-2 bg-orange-400"
+                            checked={rating === i + 1}
+                            onChange={() => setRating(i + 1)}
+                        />
+                    ))}
+                </div>
+                <textarea
+                    className="textarea textarea-bordered w-full h-24 mb-4"
+                    placeholder="Share your thoughts about the product..."
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    required
+                ></textarea>
+                {error && <div className="alert alert-error mb-4">{error}</div>}
+                <button type="submit" className="btn btn-primary" disabled={loading}>
+                    {loading ? <span className="loading loading-spinner"></span> : 'Submit Review'}
+                </button>
+            </form>
+        </div>
+    );
+};
 
 const ProductDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    
+
     // Redux State
     const product = useSelector(selectCurrentProduct);
     const loading = useSelector(selectProductLoading);
     const error = useSelector(selectProductError);
-    
+
     // Cart state
     const addingToCart = useSelector(selectAddingToCart);
 
@@ -45,15 +102,47 @@ const ProductDetailPage = () => {
     const [isWishlisted, setIsWishlisted] = useState(false);
     const [activeTab, setActiveTab] = useState('details');
 
+    // Redux state for recommendations
+    const recommendations = useSelector(selectRecommendations);
+    const recommendationsLoading = useSelector(selectRecommendationsLoading);
+
+    // Review state
+    const canReview = useSelector(selectCanReview);
+    const reviewLoading = useSelector(selectReviewLoading);
+    const reviewError = useSelector(selectReviewError);
+    const { isAuthenticated } = useSelector((state) => state.auth);
+
+
+    // Map backend data
+    const {
+        productId,
+        name,
+        description,
+        imageUrl,
+        stockQuantity,
+        condition,
+        basePrice,
+        appliedRuleName,
+        dynamicPrice,
+        averageRating = 0,
+        categories = [],
+        reviews = []
+    } = useMemo(() => product || {}, [product]);
+
     useEffect(() => {
         if (id) {
             dispatch(fetchProductById(id));
+            dispatch(fetchRecommendations({ productId: id, limit: 4 }));
+            if (isAuthenticated) {
+                dispatch(checkCanReview(id));
+            }
         }
-        
+
         return () => {
             dispatch(clearCurrentProduct());
+            dispatch(clearRecommendations());
         };
-    }, [id, dispatch]);
+    }, [id, dispatch, isAuthenticated]);
 
     // Reset selected image when product changes
     useEffect(() => {
@@ -76,9 +165,9 @@ const ProductDetailPage = () => {
         }
 
         try {
-            await dispatch(addToCart({ 
-                product_id: product.productId, 
-                quantity: quantity 
+            await dispatch(addToCart({
+                product_id: product.productId,
+                quantity: quantity
             })).unwrap();
             setQuantity(1);
         } catch (error) {
@@ -91,15 +180,18 @@ const ProductDetailPage = () => {
         setIsWishlisted(!isWishlisted);
     };
 
+    const handleAddReview = (reviewData) => {
+        dispatch(addReview({ productId: id, reviewData }));
+    };
+
     const renderStars = (rating) => {
         return [...Array(5)].map((_, i) => (
-            <Star 
-                key={i} 
-                className={`h-5 w-5 ${
-                    i < Math.floor(rating) 
-                        ? 'text-yellow-400 fill-current' 
-                        : 'text-gray-300'
-                }`} 
+            <Star
+                key={i}
+                className={`h-5 w-5 ${i < Math.floor(rating)
+                    ? 'text-yellow-400 fill-current'
+                    : 'text-gray-300'
+                    }`}
             />
         ));
     };
@@ -121,7 +213,7 @@ const ProductDetailPage = () => {
                     <h2 className="text-2xl font-bold mb-4">Error Loading Product</h2>
                     <p className="text-base-content/70 mb-4">{error}</p>
                     <div className="flex gap-4 justify-center">
-                        <button 
+                        <button
                             onClick={() => dispatch(fetchProductById(id))}
                             className="btn btn-primary"
                         >
@@ -149,25 +241,9 @@ const ProductDetailPage = () => {
         );
     }
 
-    // Map backend data
-    const {
-        productId,
-        name,
-        description,
-        imageUrl,
-        stockQuantity,
-        condition,
-        basePrice,
-        appliedRuleName,
-        dynamicPrice,
-        averageRating = 0,
-        categories = [],
-        reviews = []
-    } = product;
-
     const isInStock = stockQuantity > 0;
     const isLowStock = stockQuantity <= 5 && stockQuantity > 0;
-    const discount = basePrice > dynamicPrice 
+    const discount = basePrice > dynamicPrice
         ? Math.round(((basePrice - dynamicPrice) / basePrice) * 100)
         : 0;
 
@@ -185,19 +261,18 @@ const ProductDetailPage = () => {
                                 {description || "No description available for this product."}
                             </p>
                         </div>
-                        
+
                         {categories.length > 0 && (
                             <div>
                                 <h3 className="text-xl font-semibold mb-4">Categories</h3>
                                 <div className="flex flex-wrap gap-2">
                                     {categories.map(category => (
-                                        <span 
-                                            key={category.categoryId} 
-                                            className={`badge ${
-                                                category.categoryType === 'Flower Type' 
-                                                    ? 'badge-primary' 
-                                                    : 'badge-secondary'
-                                            }`}
+                                        <span
+                                            key={category.categoryId}
+                                            className={`badge ${category.categoryType === 'Flower Type'
+                                                ? 'badge-primary'
+                                                : 'badge-secondary'
+                                                }`}
                                         >
                                             {category.name}
                                         </span>
@@ -213,7 +288,7 @@ const ProductDetailPage = () => {
                         )}
                     </div>
                 );
-                
+
             case 'specifications':
                 return (
                     <div className="space-y-4">
@@ -252,7 +327,7 @@ const ProductDetailPage = () => {
                         </div>
                     </div>
                 );
-                
+
             case 'care':
                 return (
                     <div className="space-y-4">
@@ -270,10 +345,32 @@ const ProductDetailPage = () => {
                         </div>
                     </div>
                 );
-                
+
             case 'reviews':
                 return (
                     <div className="space-y-6">
+                        {canReview && (
+                            <ReviewForm
+                                productId={id}
+                                loading={reviewLoading}
+                                error={reviewError}
+                                onSubmit={handleAddReview}
+                            />
+                        )}
+
+                        {isAuthenticated && !canReview && (
+                            <div className="text-center py-8">
+                                <p className="text-base-content/70">You have already reviewed this product or are not eligible to review it.</p>
+                            </div>
+                        )}
+
+                        {!isAuthenticated && (
+                            <div className="text-center py-8">
+                                <p className="text-base-content/70">
+                                    <Link to="/login" className="link link-primary">Log in</Link> to leave a review.
+                                </p>
+                            </div>
+                        )}
                         <div className="flex items-center justify-between">
                             <h3 className="text-xl font-semibold">Customer Reviews</h3>
                             {reviews.length > 0 && (
@@ -286,7 +383,6 @@ const ProductDetailPage = () => {
                                 </div>
                             )}
                         </div>
-                        
                         {reviews.length > 0 ? (
                             <div className="space-y-4">
                                 {reviews.map(review => (
@@ -328,7 +424,7 @@ const ProductDetailPage = () => {
                         )}
                     </div>
                 );
-                
+
             default:
                 return null;
         }
@@ -353,8 +449,8 @@ const ProductDetailPage = () => {
                 <div className="space-y-4">
                     {/* Main Image */}
                     <div className="aspect-square rounded-2xl overflow-hidden bg-base-200 relative group">
-                        <img 
-                            src={images[selectedImage] || imageUrl} 
+                        <img
+                            src={images[selectedImage] || imageUrl}
                             alt={name}
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                             onError={(e) => {
@@ -366,28 +462,27 @@ const ProductDetailPage = () => {
                                 -{discount}%
                             </div>
                         )}
-                        <button 
+                        <button
                             onClick={handleAddToWishlist}
                             className={`absolute top-4 right-4 btn btn-circle btn-sm ${isWishlisted ? 'btn-error' : 'btn-ghost bg-base-100/80'}`}
                         >
                             <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-current' : ''}`} />
                         </button>
                     </div>
-                    
+
                     {/* Thumbnail Images*/}
                     {imageUrl && (
                         <div className="grid grid-cols-3 gap-3">
                             {images.map((image, index) => (
-                                <button 
+                                <button
                                     key={index}
                                     onClick={() => setSelectedImage(index)}
-                                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
-                                        selectedImage === index ? 'border-primary' : 'border-base-300 hover:border-primary/50'
-                                    }`}
+                                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${selectedImage === index ? 'border-primary' : 'border-base-300 hover:border-primary/50'
+                                        }`}
                                 >
-                                    <img 
-                                        src={image || imageUrl} 
-                                        alt={`${name} ${index + 1}`} 
+                                    <img
+                                        src={image || imageUrl}
+                                        alt={`${name} ${index + 1}`}
                                         className="w-full h-full object-cover"
                                         onError={(e) => {
                                             e.target.src = "/placeholder-flower.jpg";
@@ -404,11 +499,10 @@ const ProductDetailPage = () => {
                     {/* Product Header */}
                     <div>
                         <div className="flex items-center gap-2 mb-2">
-                            <span className={`badge ${
-                                condition === 'New Flower' ? 'badge-success' :
+                            <span className={`badge ${condition === 'New Flower' ? 'badge-success' :
                                 condition === 'Low Stock' ? 'badge-warning' :
-                                'badge-neutral'
-                            }`}>
+                                    'badge-neutral'
+                                }`}>
                                 {condition}
                             </span>
                             {categories.map(category => (
@@ -418,7 +512,7 @@ const ProductDetailPage = () => {
                             ))}
                         </div>
                         <h1 className="text-3xl font-bold mb-3">{name}</h1>
-                        
+
                         {/* Rating */}
                         {averageRating > 0 && (
                             <div className="flex items-center gap-2 mb-4">
@@ -445,7 +539,7 @@ const ProductDetailPage = () => {
                             </span>
                         )}
                     </div>
-                    
+
                     {/* Applied Rule */}
                     {appliedRuleName && (
                         <div className="alert alert-info">
@@ -479,7 +573,7 @@ const ProductDetailPage = () => {
                         <div className="flex items-center gap-4">
                             <span className="font-semibold">Quantity:</span>
                             <div className="flex items-center">
-                                <button 
+                                <button
                                     onClick={() => handleQuantityChange(-1)}
                                     disabled={quantity <= 1}
                                     className="btn btn-outline btn-sm btn-square"
@@ -487,7 +581,7 @@ const ProductDetailPage = () => {
                                     <Minus className="h-4 w-4" />
                                 </button>
                                 <span className="w-16 text-center font-semibold">{quantity}</span>
-                                <button 
+                                <button
                                     onClick={() => handleQuantityChange(1)}
                                     disabled={quantity >= stockQuantity}
                                     className="btn btn-outline btn-sm btn-square"
@@ -498,7 +592,7 @@ const ProductDetailPage = () => {
                         </div>
 
                         <div className="flex gap-3">
-                            <button 
+                            <button
                                 onClick={handleAddToCart}
                                 disabled={!isInStock || addingToCart}
                                 className="btn btn-primary flex-1"
@@ -510,7 +604,7 @@ const ProductDetailPage = () => {
                                 )}
                                 Add to Cart - ${(dynamicPrice * quantity).toFixed(2)}
                             </button>
-                            <button 
+                            <button
                                 onClick={handleAddToWishlist}
                                 className={`btn btn-outline btn-square ${isWishlisted ? 'btn-error' : ''}`}
                             >
@@ -552,36 +646,66 @@ const ProductDetailPage = () => {
             {/* Product Details Tabs */}
             <div className="mb-12">
                 <div className="tabs tabs-boxed mb-6">
-                    <button 
+                    <button
                         className={`tab ${activeTab === 'details' ? 'tab-active' : ''}`}
                         onClick={() => setActiveTab('details')}
                     >
                         Details
                     </button>
-                    <button 
+                    <button
                         className={`tab ${activeTab === 'specifications' ? 'tab-active' : ''}`}
                         onClick={() => setActiveTab('specifications')}
                     >
                         Specifications
                     </button>
-                    <button 
+                    <button
                         className={`tab ${activeTab === 'care' ? 'tab-active' : ''}`}
                         onClick={() => setActiveTab('care')}
                     >
                         Care Instructions
                     </button>
-                    <button 
+                    <button
                         className={`tab ${activeTab === 'reviews' ? 'tab-active' : ''}`}
                         onClick={() => setActiveTab('reviews')}
                     >
                         Reviews ({reviews.length})
                     </button>
                 </div>
-                
+
                 <div className="bg-base-100 p-6 rounded-lg shadow-lg">
                     {renderTabContent()}
                 </div>
             </div>
+
+            {recommendations && recommendations.length > 0 && (
+                <div className="mt-16">
+                    <h2 className="text-3xl font-bold mb-6 text-center">You Might Also Like</h2>
+                    {recommendationsLoading ? (
+                        <div className="flex justify-center items-center">
+                            <span className="loading loading-spinner loading-lg"></span>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {recommendations.map(product => (
+                                <ProductCard
+                                    key={product.product_id}
+                                    product={{
+                                        productId: product.product_id,
+                                        name: product.name,
+                                        imageUrl: product.image_url,
+                                        basePrice: product.base_price,
+                                        dynamicPrice: product.dynamicPrice,
+                                        condition: product.condition,
+                                        stockQuantity: product.stockQuantity,
+                                        averageRating: product.averageRating,
+                                        totalSold: product.totalSold,
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Back to Products */}
             <div className="mt-8 text-center">

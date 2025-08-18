@@ -2,12 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchOrders, fetchOrderItems, clearOrderError } from '../../features/orders/ordersSlice';
 import ProfileSidebar from '../../features/profile/ProfileSidebar';
+import Footer from '../../components/layout/Footer';
 
 const OrderPage = () => {
   const dispatch = useDispatch();
   const { orders, orderItems, loading, error, itemsLoading } = useSelector(state => state.orders);
   const { token, user } = useSelector(state => state.auth);
   const [expandedOrder, setExpandedOrder] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const limit = 5;
 
   // Debug logging
   console.log('OrderPage - Auth state:', { token: !!token, user: !!user });
@@ -16,11 +19,21 @@ const OrderPage = () => {
   useEffect(() => {
     if (token) {
       console.log('Dispatching fetchOrders...');
-      dispatch(fetchOrders());
+      dispatch(fetchOrders()); // Always fetch all user orders
     } else {
       console.log('No token available, cannot fetch orders');
     }
   }, [dispatch, token]);
+  // Client-side pagination for user orders
+  const totalOrders = orders.length;
+  const totalPages = Math.max(1, Math.ceil(totalOrders / limit));
+  const paginatedOrders = orders.slice((currentPage - 1) * limit, currentPage * limit);
+
+  const handlePageChange = (newPage) => {
+    if (newPage > 0 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
 
   const handleExpandOrder = (orderId) => {
     console.log('Expanding order:', orderId);
@@ -205,7 +218,99 @@ const OrderPage = () => {
                     )}
                   </div>
                 </div>
-              ))}
+              )}
+              <div className="space-y-4">
+                {paginatedOrders.map((order) => (
+                  <div key={order.order_id} className="card bg-base-100 shadow-sm">
+                    <div className="card-body p-4">
+                      <div
+                        className="grid gap-4 items-center cursor-pointer"
+                        style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1.5fr 0.5fr' }}
+                        onClick={() => handleExpandOrder(order.order_id)}
+                      >
+                        {/* Order Date */}
+                        <div>
+                          <p className="font-semibold">Order #{order.order_id}</p>
+                          <p className="text-sm text-base-content/70">
+                            {formatDate(order.order_date)}
+                          </p>
+                        </div>
+                        {/* Payment Method */}
+                        <div>
+                          <p className="text-sm font-medium">{order.payment_method}</p>
+                        </div>
+                        {/* Amount */}
+                        <div className="text-right">
+                          <p className="font-semibold text-lg">${order.total_amount}</p>
+                        </div>
+                        {/* Status */}
+                        <div className="flex items-center justify-center">
+                          <div className={`badge ${getStatusBadgeClass(order.status)}`}>
+                            {order.status}
+                          </div>
+                        </div>
+                        {/* Arrow */}
+                        <div className="flex items-center justify-center">
+                          <svg
+                            className={`w-5 h-5 transition-transform ${expandedOrder === order.order_id ? 'rotate-180' : ''}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </div>
+                      {/* Expanded order details */}
+                      {expandedOrder === order.order_id && (
+                        <div className="mt-4 pt-4 border-t border-base-300">
+                          <h4 className="font-semibold mb-3">Order Items</h4>
+                          {itemsLoading[order.order_id] && (
+                            <div className="flex justify-center py-4">
+                              <span className="loading loading-spinner loading-md"></span>
+                            </div>
+                          )}
+                          {orderItems[order.order_id] && (
+                            <div className="space-y-2">
+                              {orderItems[order.order_id].map((item, index) => (
+                                <div key={index} className="flex justify-between items-center py-2 px-3 bg-base-200 rounded">
+                                  <div className="flex items-center gap-3">
+                                    <div>
+                                      <p className="font-medium">{item.product_name || item.name || `Product #${item.product_id}`}</p>
+                                      <p className="text-sm text-base-content/70">Quantity: {item.quantity}</p>
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="font-semibold">${item.price_at_purchase}</p>
+                                    <p className="text-sm text-base-content/70">
+                                      Total: ${(item.price_at_purchase * item.quantity).toFixed(2)}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {!itemsLoading[order.order_id] && !orderItems[order.order_id] && (
+                            <div className="alert alert-info">
+                              <span>Failed to load order items</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="w-full flex justify-center mt-6">
+                    <div className="join">
+                      <button onClick={() => handlePageChange(currentPage - 1)} className="join-item btn" disabled={currentPage === 1}>«</button>
+                      <button className="join-item btn">Page {currentPage} of {totalPages}</button>
+                      <button onClick={() => handlePageChange(currentPage + 1)} className="join-item btn" disabled={currentPage === totalPages}>»</button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
