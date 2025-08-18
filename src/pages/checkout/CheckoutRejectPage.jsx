@@ -13,7 +13,7 @@ const CheckoutRejectPage = () => {
         <h1 className="text-2xl font-semibold text-error mb-4">Payment Failed</h1>
         <p className="mb-4">Order #{orderId} could not be processed. Code: {code}</p>
         <div className="flex gap-2 justify-center">
-          <Link to="/checkout" className="btn">Back to checkout</Link>
+          <Link to="/" className="btn">Back to home</Link>
           <Link to="/orders" className="btn btn-outline">My Orders</Link>
         </div>
       </div>

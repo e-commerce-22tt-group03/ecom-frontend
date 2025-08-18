@@ -69,9 +69,12 @@ const CheckoutPage = () => {
       const createdOrder = await dispatch(placeOrder({ shipping_address_id: selectedAddressId, payment_method: paymentMethod })).unwrap();
       const orderId = createdOrder?.order_id || createdOrder?.id || createdOrder?.data?.order_id;
 
-      // If VNPAY selected, request payment URL from backend and redirect there
+      // If VNPAY selected, navigate to processing UI immediately, then request payment URL and redirect
       if (paymentMethod === 'VNPAY') {
         if (!orderId) throw new Error('Missing order id from create order response');
+        // Navigate to processing page so user sees a stable UI while we request the payment URL
+        navigate(`/checkout/processing?order_id=${orderId}`);
+
         const returnUrl = `${window.location.origin}/checkout/processing`;
         const res = await createPaymentUrl({ order_id: orderId, return_url: returnUrl });
         // backend returns the payment URL (string) in data; support both string or object
@@ -79,6 +82,7 @@ const CheckoutPage = () => {
         if (!paymentUrl) throw new Error('Payment URL not returned by server');
         // navigate the browser to VNPAY sandbox
         window.location.assign(paymentUrl);
+        return;
       }
       // otherwise (COD) the lastOrderId effect will navigate to confirmation
     } catch (err) {

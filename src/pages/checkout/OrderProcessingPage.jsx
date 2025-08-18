@@ -33,6 +33,15 @@ const OrderProcessingPage = () => {
         return;
       }
 
+      // If there is NO response code or transaction status, this is the pre-redirect state
+      // (FE navigated here before redirecting user to VNPAY). Show a friendly message and do not call confirm.
+      if (typeof vnpResponse === 'undefined' && typeof params.vnp_TransactionStatus === 'undefined') {
+        setStatus('redirecting');
+        setMessage('Preparing payment and redirecting to VNPAY...');
+        // Stay on this page while FE triggers the browser redirect. Do not navigate elsewhere.
+        return;
+      }
+
       // If response not success, navigate to reject page immediately
       if (vnpResponse !== '00' && params.vnp_TransactionStatus !== '00') {
         setStatus('failed');
@@ -70,6 +79,7 @@ const OrderProcessingPage = () => {
       <div className="p-8 rounded-lg shadow bg-base-100 text-center">
         <h2 className="text-xl font-semibold mb-4">{message}</h2>
         {status === 'processing' && <span className="loading loading-spinner loading-lg"></span>}
+        {status === 'redirecting' && <span className="loading loading-spinner loading-lg"></span>}
         {status === 'success' && <div className="text-success">Success</div>}
         {status === 'failed' && <div className="text-error">Failed</div>}
       </div>
