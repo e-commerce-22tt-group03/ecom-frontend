@@ -169,6 +169,7 @@ const CheckoutPage = () => {
                 </label>
                 <label className="flex items-center gap-3 p-4 border rounded opacity-50 cursor-not-allowed">
                   <input type="radio" name="payment" className="radio" disabled />
+                  {/* // VNPAY payment */}
                   <div className="flex items-center gap-3">
                     <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-VNPAY-QR-1.png" alt="VNPAY" className="w-24 h-16 object-contain" />
                     <div>
