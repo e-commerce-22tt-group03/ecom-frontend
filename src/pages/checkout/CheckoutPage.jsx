@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { fetchCart, selectCartItems, selectCartTotal } from '../../features/cart/cartSlice';
 import { fetchAddresses, selectAddresses, selectDefaultAddressId, createAddress } from '../../features/address/addressSlice';
 import { placeOrder, selectCheckoutPlacing, selectLastOrderId, selectCheckoutError } from '../../features/checkout/checkoutSlice';
+import { createPaymentUrl } from '../../api/vnpayApi';
 
 const CheckoutPage = () => {
   const dispatch = useDispatch();
@@ -55,14 +56,35 @@ const CheckoutPage = () => {
   }, [cartItems, navigate, lastOrderId]);
 
   useEffect(() => {
-    if (lastOrderId) {
+    // Only auto-navigate to order confirmation for non-VNPAY flows (e.g., COD).
+    if (lastOrderId && paymentMethod !== 'VNPAY') {
       navigate(`/order-confirmation/${lastOrderId}`);
     }
-  }, [lastOrderId, navigate]);
+  }, [lastOrderId, navigate, paymentMethod]);
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (!selectedAddressId) return;
-    dispatch(placeOrder({ shipping_address_id: selectedAddressId, payment_method: paymentMethod }));
+    try {
+      // Create order first (BE will clear cart)
+      const createdOrder = await dispatch(placeOrder({ shipping_address_id: selectedAddressId, payment_method: paymentMethod })).unwrap();
+      const orderId = createdOrder?.order_id || createdOrder?.id || createdOrder?.data?.order_id;
+
+      // If VNPAY selected, request payment URL from backend and redirect there
+      if (paymentMethod === 'VNPAY') {
+        if (!orderId) throw new Error('Missing order id from create order response');
+        const returnUrl = `${window.location.origin}/checkout/processing`;
+        const res = await createPaymentUrl({ order_id: orderId, return_url: returnUrl });
+        // backend returns the payment URL (string) in data; support both string or object
+        const paymentUrl = typeof res === 'string' ? res : (res?.url || res?.paymentUrl || res?.data);
+        if (!paymentUrl) throw new Error('Payment URL not returned by server');
+        // navigate the browser to VNPAY sandbox
+        window.location.assign(paymentUrl);
+      }
+      // otherwise (COD) the lastOrderId effect will navigate to confirmation
+    } catch (err) {
+      console.error('Place order failed', err);
+      alert(err?.message || 'Failed to place order.');
+    }
   };
 
   const handleChangeNewAddress = (e) => {
@@ -161,19 +183,14 @@ const CheckoutPage = () => {
                     <p className="text-xs text-gray-500">Pay when the order arrives.</p>
                   </div>
                 </label>
-                <label className="flex items-center gap-3 p-4 border rounded opacity-50 cursor-not-allowed">
-                  <input type="radio" name="payment" className="radio" disabled />
-                  <div>
-                    <p className="font-medium">Paypal (Coming Soon)</p>
-                  </div>
-                </label>
-                <label className="flex items-center gap-3 p-4 border rounded opacity-50 cursor-not-allowed">
-                  <input type="radio" name="payment" className="radio" disabled />
-                  {/* // VNPAY payment */}
+                <label className="flex items-center gap-3 p-4 border rounded">
+                  <input type="radio" name="payment" className="radio" value="VNPAY" checked={paymentMethod === 'VNPAY'} onChange={() => setPaymentMethod('VNPAY')} />
+                  {/* VNPAY payment - sandbox redirect */}
                   <div className="flex items-center gap-3">
                     <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-VNPAY-QR-1.png" alt="VNPAY" className="w-24 h-16 object-contain" />
                     <div>
-                      <p className="font-medium"> (Coming Soon)</p>
+                      <p className="font-medium">VNPAY (Sandbox)</p>
+                      <p className="text-xs text-base-content/60">You will be redirected to VNPAY to complete payment.</p>
                     </div>
                   </div>
                 </label>

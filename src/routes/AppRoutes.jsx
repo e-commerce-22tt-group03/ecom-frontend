@@ -22,6 +22,8 @@ import CartPage from '../pages/cart/CartPage';
 import ManageAddressPage from "../pages/user/ManageAddressPage";
 import CheckoutPage from "../pages/checkout/CheckoutPage";
 import OrderConfirmationPage from "../pages/checkout/OrderConfirmationPage";
+import OrderProcessingPage from "../pages/checkout/OrderProcessingPage";
+import CheckoutRejectPage from "../pages/checkout/CheckoutRejectPage";
 
 const AppRoutes = () => {
     return (
@@ -34,6 +36,8 @@ const AppRoutes = () => {
             <Route path="/orders" element={<OrderPage />} />
             <Route path="/address" element={<ManageAddressPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/checkout/processing" element={<OrderProcessingPage />} />
+            <Route path="/checkout/reject" element={<CheckoutRejectPage />} />
             <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage />} />
             <Route path="/about" element={<h2>About Page</h2>} />
             <Route path="/contact" element={<h2>Contact Page</h2>} />
