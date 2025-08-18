@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { fetchCart, selectCartItems, selectCartTotal } from '../../features/cart/cartSlice';
-import { fetchAddresses, selectAddresses, selectDefaultAddressId, setDefaultAddress, createAddress } from '../../features/address/addressSlice';
+import { fetchAddresses, selectAddresses, selectDefaultAddressId, createAddress } from '../../features/address/addressSlice';
 import { placeOrder, selectCheckoutPlacing, selectLastOrderId, selectCheckoutError } from '../../features/checkout/checkoutSlice';
 
 const CheckoutPage = () => {
@@ -145,9 +145,7 @@ const CheckoutPage = () => {
                       <p className="text-sm text-base-content/70">{addr.city}, {addr.country}</p>
                       {addr.is_default && <span className="badge badge-primary">Default</span>}
                     </div>
-                    {(!addr.is_default) && (
-                      <button type="button" className="text-xs underline" onClick={() => dispatch(setDefaultAddress(addr.address_id))}>Make Default</button>
-                    )}
+                    {/* Default management moved to profile/addresses page; no action here */}
                   </label>
                 ))}
               </div>
