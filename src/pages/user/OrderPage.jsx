@@ -27,7 +27,7 @@ const OrderPage = () => {
     console.log('Current expandedOrder:', expandedOrder);
     console.log('Current orderItems:', orderItems);
     console.log('ItemsLoading state:', itemsLoading);
-    
+
     if (expandedOrder === orderId) {
       setExpandedOrder(null);
     } else {
@@ -54,10 +54,12 @@ const OrderPage = () => {
 
   const getStatusBadgeClass = (status) => {
     switch (status) {
-      case 'Processing':
+      case 'Pending':
         return 'badge-warning';
-      case 'Delivering':
+      case 'Processing':
         return 'badge-info';
+      case 'Delivering':
+        return 'badge-primary';
       case 'Completed':
         return 'badge-success';
       case 'Cancelled':
@@ -70,7 +72,7 @@ const OrderPage = () => {
   return (
     <div className="flex flex-col md:flex-row min-h-screen w-screen bg-base-200">
       <ProfileSidebar />
-      
+
       <div className="w-full md:w-4/5 flex items-start justify-start h-full md:h-screen">
         <div className="w-full max-w-4xl ml-0 mt-10 md:ml-24">
           <div className="w-full p-3">
@@ -105,7 +107,7 @@ const OrderPage = () => {
             {/* Header Bar */}
             {orders.length > 0 && (
               <div className="bg-base-300 rounded-lg p-4 mb-4">
-                <div className="grid gap-4 font-semibold text-base-content" style={{gridTemplateColumns: '2fr 1.5fr 1fr 1.5fr 0.5fr'}}>
+                <div className="grid gap-4 font-semibold text-base-content" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1.5fr 0.5fr' }}>
                   <div>Order Date</div>
                   <div>Payment Method</div>
                   <div className="text-right">Amount</div>
@@ -119,9 +121,9 @@ const OrderPage = () => {
               {orders.map((order) => (
                 <div key={order.order_id} className="card bg-base-100 shadow-sm">
                   <div className="card-body p-4">
-                    <div 
+                    <div
                       className="grid gap-4 items-center cursor-pointer"
-                      style={{gridTemplateColumns: '2fr 1.5fr 1fr 1.5fr 0.5fr'}}
+                      style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1.5fr 0.5fr' }}
                       onClick={() => handleExpandOrder(order.order_id)}
                     >
                       {/* Order Date */}
@@ -131,30 +133,30 @@ const OrderPage = () => {
                           {formatDate(order.order_date)}
                         </p>
                       </div>
-                      
+
                       {/* Payment Method */}
                       <div>
                         <p className="text-sm font-medium">{order.payment_method}</p>
                       </div>
-                      
+
                       {/* Amount */}
                       <div className="text-right">
                         <p className="font-semibold text-lg">${order.total_amount}</p>
                       </div>
-                      
+
                       {/* Status */}
                       <div className="flex items-center justify-center">
                         <div className={`badge ${getStatusBadgeClass(order.status)}`}>
                           {order.status}
                         </div>
                       </div>
-                      
+
                       {/* Arrow */}
                       <div className="flex items-center justify-center">
-                        <svg 
+                        <svg
                           className={`w-5 h-5 transition-transform ${expandedOrder === order.order_id ? 'rotate-180' : ''}`}
-                          fill="none" 
-                          stroke="currentColor" 
+                          fill="none"
+                          stroke="currentColor"
                           viewBox="0 0 24 24"
                         >
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -166,7 +168,7 @@ const OrderPage = () => {
                     {expandedOrder === order.order_id && (
                       <div className="mt-4 pt-4 border-t border-base-300">
                         <h4 className="font-semibold mb-3">Order Items</h4>
-                        
+
                         {itemsLoading[order.order_id] && (
                           <div className="flex justify-center py-4">
                             <span className="loading loading-spinner loading-md"></span>
@@ -186,7 +188,7 @@ const OrderPage = () => {
                                 <div className="text-right">
                                   <p className="font-semibold">${item.price_at_purchase}</p>
                                   <p className="text-sm text-base-content/70">
-                                     Total: ${(item.price_at_purchase * item.quantity).toFixed(2)}
+                                    Total: ${(item.price_at_purchase * item.quantity).toFixed(2)}
                                   </p>
                                 </div>
                               </div>

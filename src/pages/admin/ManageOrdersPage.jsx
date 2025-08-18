@@ -77,6 +77,7 @@ const ManageOrdersPage = () => {
               onChange={handleStatusChange}
             >
               <option value="">All Statuses</option>
+              <option>Pending</option>
               <option>Processing</option>
               <option>Delivering</option>
               <option>Completed</option>
