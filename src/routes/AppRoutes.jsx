@@ -22,6 +22,10 @@ import OrderPage from "../pages/user/OrderPage";
 import ProfilePage from "../pages/user/ProfilePage";
 import CartPage from '../pages/cart/CartPage';
 import ManageAddressPage from "../pages/user/ManageAddressPage";
+import CheckoutPage from "../pages/checkout/CheckoutPage";
+import OrderConfirmationPage from "../pages/checkout/OrderConfirmationPage";
+import OrderProcessingPage from "../pages/checkout/OrderProcessingPage";
+import CheckoutRejectPage from "../pages/checkout/CheckoutRejectPage";
 
 const AppRoutes = () => {
     return (
@@ -33,6 +37,10 @@ const AppRoutes = () => {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/orders" element={<OrderPage />} />
             <Route path="/address" element={<ManageAddressPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/checkout/processing" element={<OrderProcessingPage />} />
+            <Route path="/checkout/reject" element={<CheckoutRejectPage />} />
+            <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage />} />
             <Route path="/about" element={<h2>About Page</h2>} />
             <Route path="/contact" element={<h2>Contact Page</h2>} />
             <Route path="/profile" element={<ProfilePage />} />
@@ -41,10 +49,6 @@ const AppRoutes = () => {
 
             {/* Cart Route */}
             <Route path="/cart" element={<CartPage />} />
-
-            {/* Future routes - will be implemented later */}
-            {/* <Route path="/checkout" element={<CheckoutPage />} /> */}
-            {/* <Route path="/orders" element={<OrdersPage />} /> */}
 
             {/* Admin Routes */}
             <Route element={<AdminRoute />}>

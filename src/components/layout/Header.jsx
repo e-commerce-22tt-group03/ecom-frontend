@@ -1,79 +1,35 @@
-// import { Link, NavLink } from 'react-router-dom';
-// import { ShoppingCart, Search, User } from 'lucide-react';
-
-// import { version } from "react"
-
-// const Header = () => {
-//     // This will later be replaced with data from redux
-//     const isLoggedIn = false; 
-//     const cartItemCount = 0;
-//     return (
-//         <header className="bg-base-100 shadow-lg sticky top-0 z-50">
-//             <div className="navbar container mx-auto">
-//                 <div className="navbar-start">
-//                     <Link to="/" className="btn btn-ghost text-2xl font-bold text-primary">
-//                         LazaHoa - 🌸 FlowerShop
-//                     </Link>
-//                 </div>
-//                 <div className="navbar-center hidden lg:flex">
-//                     <ul className="menu menu-horizontal p-0">
-//                         <li><NavLink to="/products">All Flowers</NavLink></li>
-//                         <li><NavLink to="/occasions/birthday">Birthday</NavLink></li>
-//                         <li><NavLink to="/occasions/valentines">Valentine's</NavLink></li>
-//                     </ul>
-//                 </div>
-//                 <div className="navbar-end">
-//                     <button className="btn btn-ghost btn-circle">
-//                         <Search />
-//                     </button>
-//                     <Link to="/cart" className="btn btn-ghost btn-circle">
-//                         <div className="indicator">
-//                             <ShoppingCart />
-//                             <span className="badge badge-sm badge-secondary indicator-item">
-//                                 {cartItemCount}</span>
-//                         </div>
-//                     </Link>
-//                     {isLoggedIn ? (
-//                         <div className="dropdown dropdown-end">
-//                             <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
-//                                 <div className="w-10 rounded-full">
-//                                     {/* In a reap app, this would be the user's avatar */}
-//                                     <User className="p-2" />
-//                                 </div>
-//                             </label>
-//                             <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 
-//                             z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-//                                 <li><Link to="/profile">Profile</Link></li>
-//                                 <li><Link to="/orders">My Orders</Link></li>
-//                                 <li><a>Logout</a></li>
-//                             </ul>
-//                         </div>
-//                     ) : (
-//                         <Link to="/login" className="btn btn-ghost">Login</Link>
-//                     )}
-//                 </div>
-//             </div>
-//         </header>
-//     );
-// };
-
-// export default Header; 
-
-// Older version of Header components
-
-// src/components/layout/Header.jsx
-import { LogOut, Menu, Search, ShoppingCart, User } from 'lucide-react';
+import { LogOut, Menu, ShoppingCart, User, Sun, Moon } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { logout } from '../../features/auth/authSlice';
+import React, { useEffect, useState } from 'react';
 
 const Header = () => {
   const dispatch = useDispatch();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const isAdmin = user?.role === 'Admin';
 
+  // count items in cart (sum of quantities)
+  const cartItemsCount = useSelector((state) => state.cart?.items?.reduce((s, it) => s + (it.quantity || 0), 0) || 0);
+
+  const [theme, setTheme] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('theme') || 'light' : 'light'));
+
+  useEffect(() => {
+    // Apply theme to document for global daisyUI tokens
+    try {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+    } catch {
+      // ignore in SSR
+    }
+  }, [theme]);
+
   const handleLogout = () => {
     dispatch(logout());
+  };
+
+  const toggleTheme = () => {
+    setTheme((t) => (t === 'light' ? 'dark' : 'light'));
   };
 
   return (
@@ -85,8 +41,6 @@ const Header = () => {
           </div>
           <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
             <li><Link to="/products">Products</Link></li>
-            <li><Link to="/categories">Categories</Link></li>
-            <li><Link to="/about">About</Link></li>
           </ul>
         </div>
         <Link to="/" className="btn btn-ghost text-xl font-bold text-primary">
@@ -97,24 +51,21 @@ const Header = () => {
       <div className="navbar-center hidden lg:flex">
         <ul className="menu menu-horizontal px-1">
           <li><Link to="/products">Products</Link></li>
-          <li><Link to="/categories">Categories</Link></li>
-          <li><Link to="/about">About</Link></li>
         </ul>
       </div>
 
       <div className="navbar-end gap-2">
-        <div className="form-control">
-          <input type="text" placeholder="Search flowers..." className="input input-bordered w-24 md:w-auto" />
-        </div>
-        <button className="btn btn-ghost btn-circle">
-          <Search className="w-5 h-5" />
-        </button>
         <Link to="/cart" className="btn btn-ghost btn-circle">
           <div className="indicator">
             <ShoppingCart className="w-5 h-5" />
-            {/* <span className="badge badge-sm indicator-item">3</span> */}
+            {cartItemsCount > 0 && <span className="badge badge-sm badge-error indicator-item">{cartItemsCount}</span>}
           </div>
         </Link>
+
+        {/* Theme toggle button - uses daisyUI themes via data-theme on document */}
+        <button onClick={toggleTheme} className="btn btn-ghost btn-circle" aria-label="Toggle theme">
+          {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+        </button>
 
         {isAuthenticated ? (
           <div className="dropdown dropdown-end">

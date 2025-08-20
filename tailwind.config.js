@@ -9,9 +9,10 @@ export default {
     extend: {},
   },
   plugins: [daisyui],
-  // daisyUI config (optional)
+  // daisyUI config - use built-in light theme first so it's the default
   daisyui: {
     themes: ["light", "dark", "cupcake", "bumblebee", "emerald", "synthwave"],
+    darkTheme: "dark",
   },
 }
 
