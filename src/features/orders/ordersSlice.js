@@ -9,20 +9,10 @@ import {
 
 export const fetchOrders = createAsyncThunk(
   'orders/fetchOrders',
-  async (params, { getState, rejectWithValue }) => {
+  async (params, { rejectWithValue }) => {
     try {
-      // If params exist, use API method (for admin/pagination)
-      if (params) {
-        const data = await fetchOrdersApi(params);
-        return data;
-      } else {
-        // Otherwise use direct axios call for user orders
-        const token = getState().auth.token;
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/orders`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        return { orders: res.data.data.orders };
-      }
+      const data = await fetchOrdersApi(params);
+      return data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.toString());
     }
@@ -84,8 +74,7 @@ const ordersSlice = createSlice({
   name: 'orders',
   initialState: {
     // Combined state from both slices
-    orders: [], // For user orders (from orderSlice.js)
-    items: [], // For admin orders list (from ordersSlice.js)
+    items: [],
     orderItems: {}, // Store items by order_id
     selectedOrder: null, // For admin order details
     pagination: {
@@ -111,15 +100,8 @@ const ordersSlice = createSlice({
       })
       .addCase(fetchOrders.fulfilled, (state, action) => {
         state.loading = false;
-        // Handle both API formats
-        if (action.payload.pagination) {
-          // Admin format with pagination
-          state.items = action.payload.orders;
-          state.pagination = action.payload.pagination;
-        } else {
-          // User format without pagination
-          state.orders = action.payload.orders;
-        }
+        state.items = action.payload.orders;
+        state.pagination = action.payload.pagination;
       })
       .addCase(fetchOrders.rejected, (state, action) => {
         state.loading = false;

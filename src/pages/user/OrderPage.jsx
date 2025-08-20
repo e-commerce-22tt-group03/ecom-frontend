@@ -6,7 +6,7 @@ import Footer from '../../components/layout/Footer';
 
 const OrderPage = () => {
   const dispatch = useDispatch();
-  const { orders, orderItems, loading, error, itemsLoading } = useSelector(state => state.orders);
+  const { items: orders, pagination, orderItems, loading, error, itemsLoading } = useSelector(state => state.orders);
   const { token, user } = useSelector(state => state.auth);
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -19,18 +19,18 @@ const OrderPage = () => {
   useEffect(() => {
     if (token) {
       console.log('Dispatching fetchOrders...');
-      dispatch(fetchOrders()); // Always fetch all user orders
+      const params = {
+        page: currentPage,
+        limit,
+      };
+      dispatch(fetchOrders(params));
     } else {
       console.log('No token available, cannot fetch orders');
     }
-  }, [dispatch, token]);
-  // Client-side pagination for user orders
-  const totalOrders = orders.length;
-  const totalPages = Math.max(1, Math.ceil(totalOrders / limit));
-  const paginatedOrders = orders.slice((currentPage - 1) * limit, currentPage * limit);
+  }, [dispatch, token, currentPage]);
 
   const handlePageChange = (newPage) => {
-    if (newPage > 0 && newPage <= totalPages) {
+    if (newPage > 0 && newPage <= pagination.total_pages) {
       setCurrentPage(newPage);
     }
   };
@@ -125,7 +125,7 @@ const OrderPage = () => {
                 </div>
               )}
               <div className="space-y-4">
-                {paginatedOrders.map((order) => (
+                {orders.map((order) => (
                   <div key={order.order_id} className="card bg-base-100 shadow-sm">
                     <div className="card-body p-4">
                       <div
@@ -206,12 +206,12 @@ const OrderPage = () => {
                   </div>
                 ))}
                 {/* Pagination Controls */}
-                {totalPages > 1 && (
+                {pagination.total_pages > 1 && (
                   <div className="w-full flex justify-center mt-6">
                     <div className="join">
                       <button onClick={() => handlePageChange(currentPage - 1)} className="join-item btn" disabled={currentPage === 1}>«</button>
-                      <button className="join-item btn">Page {currentPage} of {totalPages}</button>
-                      <button onClick={() => handlePageChange(currentPage + 1)} className="join-item btn" disabled={currentPage === totalPages}>»</button>
+                      <button className="join-item btn">Page {currentPage} of {pagination.total_pages}</button>
+                      <button onClick={() => handlePageChange(currentPage + 1)} className="join-item btn" disabled={currentPage === pagination.total_pages}>»</button>
                     </div>
                   </div>
                 )}
