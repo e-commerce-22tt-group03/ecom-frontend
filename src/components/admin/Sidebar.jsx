@@ -44,13 +44,6 @@ const Sidebar = () => {
             Manage Pricing Rules
           </NavLink>
         </li>
-        <div className="divider"></div>
-        <li>
-          <NavLink to="/admin/settings" className={getLinkClass}>
-            <Settings className="w-5 h-5 mr-3" />
-            Settings
-          </NavLink>
-        </li>
       </ul>
     </aside>
   );
