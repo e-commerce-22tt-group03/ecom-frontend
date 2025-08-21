@@ -31,7 +31,7 @@ function App() {
 
   // We can set a default theme here for the entire application
   return (
-    <div data-theme="bumblebee" className="min-h-screen flex flex-col bg-base-200">
+    <div data-theme="light" className="min-h-screen flex flex-col bg-base-200">
       <Header />
       <main className="flex-grow">
         <AppRoutes />
